@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <sys/file.h>
+#include <termios.h>
 
 #define FS_SIZE 1048576 // 1MB filesystem
 #define BLOCK_SIZE 4096 // 4KB per block
@@ -177,20 +178,89 @@ void save_fs() {
     unlock_fs_file(fd);
 }
 
+int find_file(const char *name) {
+    for (int i = 0; i < MAX_FILES; i++) {
+        if (strcmp(fs.files[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void copy_file(const char *src, const char *dest) {
+    int src_index = find_file(src);
+    if (src_index == -1) {
+        printf("Source file not found.\n");
+        return;
+    }
+    
+    int dest_index = find_file(dest);
+    if (dest_index != -1) {
+        printf("Destination file already exists.\n");
+        return;
+    }
+    
+    for (int i = 0; i < MAX_FILES; i++) {
+        if (fs.files[i].name[0] == '\0') {
+            strncpy(fs.files[i].name, dest, MAX_FILENAME - 1);
+            fs.files[i].size = fs.files[src_index].size;
+            fs.files[i].is_directory = fs.files[src_index].is_directory;
+            fs.files[i].permissions = fs.files[src_index].permissions;
+            fs.files[i].owner = fs.files[src_index].owner;
+            strncpy(fs.files[i].content, fs.files[src_index].content, BLOCK_SIZE);
+            save_fs();
+            printf("File copied successfully.\n");
+            return;
+        }
+    }
+    printf("No space to copy file.\n");
+}
+
+void move_file(const char *src, const char *dest) {
+    int src_index = find_file(src);
+    if (src_index == -1) {
+        printf("Source file not found.\n");
+        return;
+    }
+    
+    int dest_index = find_file(dest);
+    if (dest_index != -1) {
+        printf("Destination file already exists.\n");
+        return;
+    }
+    
+    strncpy(fs.files[src_index].name, dest, MAX_FILENAME - 1);
+    save_fs();
+    printf("File moved successfully.\n");
+}
+
+
 // User authentication: prompt for username and password
 int authenticate_user() {
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
     int attempts = 0;
 
+    struct termios oldt, newt;
+
     while (attempts < 3) {
         printf("Enter username: ");
         fgets(username, sizeof(username), stdin);
         username[strcspn(username, "\n")] = 0;
 
+        // Disable password echo
+        tcgetattr(STDIN_FILENO, &oldt);
+        newt = oldt;
+        newt.c_lflag &= ~ECHO;
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
         printf("Enter password: ");
         fgets(password, sizeof(password), stdin);
         password[strcspn(password, "\n")] = 0;
+
+        // Restore terminal settings
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+        printf("\n");
 
         for (int i = 0; i < user_count; i++) {
             if (strcmp(users[i].username, username) == 0 && strcmp(users[i].password, password) == 0) {
@@ -209,58 +279,12 @@ int authenticate_user() {
 }
 
 // Check if the current user has permission to access the file
-#define READ_PERMISSION 4     // Read permission bit (binary 100)
-#define WRITE_PERMISSION 5   // Modify permission bit (binary 101 or higher)
-
-int has_permission(FileEntry *file, int permission_type) {
-    // Check if the current user is the owner of the file
-    if (file->owner == current_user) {
-        // The owner always has the final say on permissions
-        int owner_permissions = (file->permissions / 100) % 10; // Owner permissions
-
-        // Check if owner has the required permission (read or write)
-        if (permission_type == READ_PERMISSION) {
-            if (owner_permissions >= 4) {
-                return 1;  // Owner has read permission
-            }
-        } else if (permission_type == WRITE_PERMISSION) {
-            if (owner_permissions >= 2) {
-                return 1;  // Owner has write permission
-            }
-        }
-        return 0; // Owner does not have the required permission
+int has_permission(FileEntry *file, mode_t permission) {
+    if (file->owner != current_user) {
+        return 0; // Only the owner has permission
     }
-
-    // Now check group and others permissions if the user is not the owner
-    int group_permissions = (file->permissions / 10) % 10;  // Group permissions
-    int other_permissions = file->permissions % 10;         // Other permissions
-
-    // Check if group has the required permission
-    if (permission_type == READ_PERMISSION) {
-        if (group_permissions >= 4) {
-            return 1;  // Group has read permission
-        }
-    } else if (permission_type == WRITE_PERMISSION) {
-        if (group_permissions >= 2) {
-            return 1;  // Group has write permission
-        }
-    }
-
-    // Check if others have the required permission
-    if (permission_type == READ_PERMISSION) {
-        if (other_permissions >= 4) {
-            return 1;  // Others have read permission
-        }
-    } else if (permission_type == WRITE_PERMISSION) {
-        if (other_permissions >= 2) {
-            return 1;  // Others have write permission
-        }
-    }
-
-    return 0; // Permission denied
+    return (file->permissions & permission) == permission;
 }
-
-
 
 void quit() {
     printf("Exiting...\n");
@@ -277,17 +301,6 @@ void create_file(const char *name, int is_directory, mode_t permissions) {
 
     flock(fd, LOCK_EX);
 
-    // Check for duplicate file or directory
-    for (int i = 0; i < MAX_FILES; i++) {
-        if (strcmp(fs.files[i].name, name) == 0) {
-            printf("Error: File or directory with the name '%s' already exists.\n", name);
-            flock(fd, LOCK_UN);
-            close(fd);
-            return;
-        }
-    }
-
-    // Create the file/directory if there's no conflict
     for (int i = 0; i < MAX_FILES; i++) {
         if (fs.files[i].name[0] == '\0') {
             strncpy(fs.files[i].name, name, MAX_FILENAME - 1);
@@ -316,15 +329,6 @@ void create_file(const char *name, int is_directory, mode_t permissions) {
 }
 
 
-// Compare function for sorting files by name (alphabetical, case-insensitive)
-int compare_name(const void *a, const void *b) {
-    FileEntry *fileA = (FileEntry *)a;
-    FileEntry *fileB = (FileEntry *)b;
-
-    return strcasecmp(fileA->name, fileB->name); // Case-insensitive comparison
-}
-
-// Function to list files, directories first, sorted by name within each category
 void list_files() {
     if (!fs_initialized) {
         printf("Error: Filesystem is not initialized. Please run the 'init' command first.\n");
@@ -342,58 +346,29 @@ void list_files() {
     int fd = lock_fs_file();
     if (fd == -1) return; // Ensure the lock is obtained
 
-    // Temporary arrays for directories and files
-    FileEntry directories[MAX_FILES];
-    FileEntry files[MAX_FILES];
-    int dir_count = 0, file_count = 0;
-
-    // Split files into directories and regular files
-    for (int i = 0; i < MAX_FILES; i++) {
-        if (fs.files[i].name[0] != '\0') { // Ensure valid file entry
-            if (fs.files[i].is_directory) {
-                directories[dir_count++] = fs.files[i]; // Store directory
-            } else {
-                files[file_count++] = fs.files[i]; // Store file
-            }
-        }
-    }
-
-    // Sort directories and files by name (case-insensitive)
-    qsort(directories, dir_count, sizeof(FileEntry), compare_name);
-    qsort(files, file_count, sizeof(FileEntry), compare_name);
-
-    // Print directories first
     printf("Files in the filesystem:\n");
     printf(".  ..  (Home directory for user %s)\n", users[current_user].username);
 
-    for (int i = 0; i < dir_count; i++) {
-        FileEntry *dir = &directories[i];
-        printf("[DIR] %-20s (Permissions: %o, Owner: %d)\n", dir->name, dir->permissions, dir->owner);
-    }
-
-    // Then print files
-    for (int i = 0; i < file_count; i++) {
-        FileEntry *file = &files[i];
-        int size_in_kb = file->size / 1024;
-        printf("[FILE] %-20s (Size: %d KB, Permissions: %o, Owner: %d)\n", 
-               file->name, size_in_kb, file->permissions, file->owner);
+    for (int i = 0; i < MAX_FILES; i++) {
+        if (fs.files[i].name[0] != '\0') { // Ensure valid file entry
+            FileEntry *file = &fs.files[i];
+            printf("[%s] %-20s (Permissions: %o, Owner: %d)\n",
+                   file->is_directory ? "DIR" : "FILE", file->name, file->permissions, file->owner);
+        }
     }
 
     unlock_fs_file(fd); // Always unlock after reading
 }
 
 // Function to modify file content
-void *modify_file_thread(void *arg) {
-    char *name = ((char **)arg)[0];
-    char *new_content = ((char **)arg)[1];
-
+void modify_file(const char *name, const char *new_content) {
     int fd = open(fs_filename, O_RDWR);
     if (fd == -1) {
         perror("Failed to open filesystem");
-        return NULL;
+        return;
     }
 
-    flock(fd, LOCK_EX);  // Lock the file
+    flock(fd, LOCK_EX);
 
     // Search for the file in the filesystem
     int file_found = 0;
@@ -402,7 +377,7 @@ void *modify_file_thread(void *arg) {
             file_found = 1;
             if (fs.files[i].is_directory) {
                 printf("%s is a directory, not a regular file.\n", name);
-            } else if (has_permission(&fs.files[i], WRITE_PERMISSION)) {
+            } else if (has_permission(&fs.files[i], W_OK)) {
                 strncpy(fs.files[i].content, new_content, BLOCK_SIZE - 1);
                 fs.files[i].content[BLOCK_SIZE - 1] = '\0'; // Ensure null termination
                 printf("File '%s' modified. New content: %s\n", name, fs.files[i].content);
@@ -424,18 +399,7 @@ void *modify_file_thread(void *arg) {
 
     flock(fd, LOCK_UN);
     close(fd);
-    return NULL;
 }
-
-void modify_file(const char *name, const char *new_content) {
-    pthread_t thread;
-    char *args[2] = { (char *)name, (char *)new_content };
-
-    // Create a new thread to modify the file
-    pthread_create(&thread, NULL, modify_file_thread, (void *)args);
-    pthread_join(thread, NULL);  // Wait for the thread to finish
-}
-
 
 // Function to read file content
 void read_file(const char *name) {
@@ -450,26 +414,18 @@ void read_file(const char *name) {
     // Search for the file in the filesystem
     int file_found = 0;
     for (int i = 0; i < MAX_FILES; i++) {
-        // Check if the file exists
         if (strcmp(fs.files[i].name, name) == 0) {
             file_found = 1;
-
-            // Check if it's a directory
             if (fs.files[i].is_directory) {
                 printf("%s is a directory, not a regular file.\n", name);
-            } 
-            // If it's not a directory, check for read permission
-            else if (has_permission(&fs.files[i], READ_PERMISSION)) {
+            } else if (has_permission(&fs.files[i], R_OK)) {
                 printf("File content: %s\n", fs.files[i].content);
-            } 
-            // If the user doesn't have read permission
-            else {
+            } else {
                 printf("Permission denied to read the file.\n");
             }
             break;
         }
     }
-
 
     if (!file_found) {
         printf("File '%s' not found.\n", name);
@@ -705,6 +661,25 @@ void execute_command(char *command) {
     }
     else if (strcmp(token, "quit") == 0) {
         quit();
+    }
+
+    else if (strcmp(token, "copy") == 0) {
+        char *src = strtok(NULL, " ");
+        char *dest = strtok(NULL, " ");
+        if (src && dest) {
+            copy_file(src, dest);
+        } else {
+            printf("Usage: copy <source> <destination>\n");
+        }
+    }
+    else if (strcmp(token, "move") == 0) {
+        char *src = strtok(NULL, " ");
+        char *dest = strtok(NULL, " ");
+        if (src && dest) {
+            move_file(src, dest);
+        } else {
+            printf("Usage: move <source> <destination>\n");
+        }
     }
     else {
         printf("Invalid command. Type help to see all available commands.\n");
