@@ -11,10 +11,9 @@
 #include <time.h>
 
 #define MAX_JOBS 10
-#define TIME_QUANTUM 2
 #define BLOCK_SIZE 4
 #define TOTAL_BLOCKS 262144 // 1MB / 4B
-#define MAX_USERS 2
+#define MAX_USERS 3
 #define MAX_FILES 100
 #define MAX_FILENAME 50
 #define MAX_DIRECTORIES 10
@@ -45,21 +44,18 @@ typedef struct
     int is_allocated;  // Allocation status
 } PageTableEntry;
 
-typedef struct
-{
+typedef struct {
     char filename[MAX_FILENAME];
     int size;
-    PageTableEntry *page_table; // Dynamic page table
-    int page_table_size;        // Number of entries in page table
-    int blocks_used;
-    int start_block;
+    PageTableEntry *page_table;  // Dynamic page table
+    int page_table_size;         // Number of entries in page table
     char owner[20];
     int permissions;
     time_t creation_time;
     time_t modification_time;
-    int content_size;  // Add this to track content size
-    char *content;     // Pointer to actual content
-    int file_position; // Add this for seek functionality
+    int content_size;
+    char *content;
+    int file_position;
 } File;
 
 typedef struct
@@ -82,7 +78,6 @@ typedef struct
     User users[MAX_USERS];
     Directory directories[MAX_DIRECTORIES];
     int current_directory;
-    int block_map[TOTAL_BLOCKS];
 } FileSystemState;
 
 FileSystemState fs_state;
@@ -99,8 +94,6 @@ unsigned char page_bitmap[TOTAL_PAGES / 8]; // 1 bit per page
 void initialize_directories();
 void save_state();
 void load_state();
-int allocate_blocks(int blocks_needed);
-void free_blocks(int start_block, int blocks_used);
 int create_file(char *filename, int size, char *owner, int permissions);
 int create_directory(char *dirname);
 void delete_file(char *filename);
@@ -128,7 +121,6 @@ void initialize_directories()
 {
     if (strlen(fs_state.directories[0].dirname) == 0)
     {
-        memset(page_bitmap, 0, sizeof(page_bitmap));
 
         // Initialize root directory
         strcpy(fs_state.directories[0].dirname, "root");
@@ -153,7 +145,7 @@ void initialize_directories()
         strcpy(fs_state.users[1].password, "alipass");
 
         // Create some default files
-        // In your initialize_directories() function, replace the file creation with:
+        memset(page_bitmap, 0, sizeof(page_bitmap));
 
         // Create page tables for default files
         PageTableEntry *file1_pages = malloc(sizeof(PageTableEntry));
@@ -210,11 +202,6 @@ void initialize_directories()
         fs_state.directories[0].files[fs_state.directories[0].file_count++] = file1;
         fs_state.directories[0].files[fs_state.directories[0].file_count++] = file2;
 
-        // Mark blocks as used
-        for (int i = 0; i < file1.blocks_used + file2.blocks_used; i++)
-        {
-            fs_state.block_map[i] = 1;
-        }
     }
 }
 
@@ -248,8 +235,7 @@ void save_state()
             }
         }
 
-        // Save block map
-        fwrite(fs_state.block_map, sizeof(fs_state.block_map), 1, fp);
+
         fclose(fp);
     }
 }
@@ -311,12 +297,6 @@ void load_state()
                 }
             }
         }
-
-        // Load block map
-        if (fread(fs_state.block_map, sizeof(fs_state.block_map), 1, fp) != 1)
-        {
-            printf("Error reading block map\n");
-        }
         fclose(fp);
     }
     else
@@ -327,22 +307,18 @@ void load_state()
 }
 
 // Add this to your file system code
-void print_page_table(const char *filename)
-{
+void print_page_table(const char *filename) {
     pthread_mutex_lock(&mutex);
-
+    
     File *file = NULL;
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
-        {
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
             file = &fs_state.directories[fs_state.current_directory].files[i];
             break;
         }
     }
 
-    if (!file)
-    {
+    if (!file) {
         printf("File not found: %s\n", filename);
         pthread_mutex_unlock(&mutex);
         return;
@@ -354,10 +330,9 @@ void print_page_table(const char *filename)
     printf("Page | Physical Page | Status\n");
     printf("-----|---------------|--------\n");
 
-    for (int i = 0; i < file->page_table_size; i++)
-    {
-        printf("%4d | %13d | %s\n",
-               i,
+    for (int i = 0; i < file->page_table_size; i++) {
+        printf("%4d | %13d | %s\n", 
+               i, 
                file->page_table[i].physical_page,
                file->page_table[i].is_allocated ? "Allocated" : "Free");
     }
@@ -365,60 +340,21 @@ void print_page_table(const char *filename)
     pthread_mutex_unlock(&mutex);
 }
 
-void print_page_bitmap()
-{
+void print_page_bitmap() {
     pthread_mutex_lock(&mutex);
-
+    
     printf("\nPage Allocation Bitmap:\n");
     printf("----------------------\n");
-
-    for (int i = 0; i < TOTAL_PAGES; i++)
-    {
-        if (i % 64 == 0)
-            printf("\n%04d: ", i);
+    
+    for (int i = 0; i < TOTAL_PAGES; i++) {
+        if (i % 64 == 0) printf("\n%04d: ", i);
         printf("%c", (page_bitmap[i / 8] & (1 << (i % 8))) ? 'X' : '.');
     }
-
+    
     printf("\n\nX = Allocated, . = Free\n");
     pthread_mutex_unlock(&mutex);
 }
 
-int allocate_blocks(int blocks_needed)
-{
-    int start_block = -1;
-    int consecutive_blocks = 0;
-    for (int i = 0; i < TOTAL_BLOCKS; i++)
-    {
-        if (fs_state.block_map[i] == 0)
-        {
-            if (start_block == -1)
-                start_block = i;
-            consecutive_blocks++;
-            if (consecutive_blocks == blocks_needed)
-            {
-                for (int j = start_block; j < start_block + blocks_needed; j++)
-                {
-                    fs_state.block_map[j] = 1;
-                }
-                return start_block;
-            }
-        }
-        else
-        {
-            start_block = -1;
-            consecutive_blocks = 0;
-        }
-    }
-    return -1;
-}
-
-void free_blocks(int start_block, int blocks_used)
-{
-    for (int i = start_block; i < start_block + blocks_used; i++)
-    {
-        fs_state.block_map[i] = 0;
-    }
-}
 
 int file_seek(File *file, int offset, int whence)
 {
@@ -449,27 +385,22 @@ int file_seek(File *file, int offset, int whence)
     return new_position;
 }
 
-void initialize_paging()
-{
+// Initialize paging system
+void initialize_paging() {
     memset(page_bitmap, 0, sizeof(page_bitmap));
 }
 
-// Helper function to allocate pages
-static int allocate_pages(int pages_needed, PageTableEntry **page_table)
-{
+// Allocate pages for a file
+int allocate_pages(int pages_needed, PageTableEntry **page_table) {
     *page_table = malloc(pages_needed * sizeof(PageTableEntry));
-    if (*page_table == NULL)
-    {
+    if (*page_table == NULL) {
         return -1;
     }
 
-    for (int i = 0; i < pages_needed; i++)
-    {
+    for (int i = 0; i < pages_needed; i++) {
         int page = -1;
-        for (int j = 0; j < TOTAL_PAGES; j++)
-        {
-            if (!(page_bitmap[j / 8] & (1 << (j % 8))))
-            {
+        for (int j = 0; j < TOTAL_PAGES; j++) {
+            if (!(page_bitmap[j / 8] & (1 << (j % 8)))) {
                 page_bitmap[j / 8] |= (1 << (j % 8));
                 (*page_table)[i].physical_page = j;
                 (*page_table)[i].is_allocated = 1;
@@ -477,11 +408,9 @@ static int allocate_pages(int pages_needed, PageTableEntry **page_table)
                 break;
             }
         }
-        if (page == -1)
-        {
+        if (page == -1) {
             // Cleanup already allocated pages
-            for (int k = 0; k < i; k++)
-            {
+            for (int k = 0; k < i; k++) {
                 page_bitmap[(*page_table)[k].physical_page / 8] &= ~(1 << ((*page_table)[k].physical_page % 8));
             }
             free(*page_table);
@@ -491,77 +420,122 @@ static int allocate_pages(int pages_needed, PageTableEntry **page_table)
     return 0;
 }
 
-void free_page(int page_num)
-{
-    if (page_num >= 0 && page_num < TOTAL_PAGES)
-    {
+// Free pages for a file
+void free_pages(File *file) {
+    for (int i = 0; i < file->page_table_size; i++) {
+        int page_num = file->page_table[i].physical_page;
         page_bitmap[page_num / 8] &= ~(1 << (page_num % 8));
     }
+    free(file->page_table);
 }
 
-// Updated create_file function
-int create_file(char *filename, int size, char *owner, int permissions)
-{
+
+int create_file(char *filename, int size, char *owner, int permissions) {
     pthread_mutex_lock(&mutex);
 
-    // Check if file already exists
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
-        {
-            printf(COLOR_RED "Error: File '%s' already exists\n" COLOR_RESET, filename);
+    // Check if file exists
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
+            printf("Error: File already exists\n");
             pthread_mutex_unlock(&mutex);
             return -1;
         }
     }
 
-    // Calculate needed pages
-    int pages_needed = (size + PAGE_SIZE - 1) / PAGE_SIZE;
-    PageTableEntry *page_table = NULL;
-
-    if (allocate_pages(pages_needed, &page_table) == -1)
-    {
-        printf(COLOR_RED "Error: Not enough disk space\n" COLOR_RESET);
+    // Validate size
+    if (size <= 0) {
+        printf("Error: Invalid file size\n");
         pthread_mutex_unlock(&mutex);
         return -1;
     }
 
-    // Create default content
-    const char *default_content = "HELLO WORLD";
-    int content_size = strlen(default_content) + 1;
+    // Calculate needed pages (round up)
+    int pages_needed = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+    if (pages_needed <= 0) pages_needed = 1;  // Minimum 1 page
 
+    // Allocate page table
+    PageTableEntry *page_table = malloc(pages_needed * sizeof(PageTableEntry));
+    if (!page_table) {
+        printf("Error: Could not allocate page table\n");
+        pthread_mutex_unlock(&mutex);
+        return -1;
+    }
+
+    // Initialize page table
+    for (int i = 0; i < pages_needed; i++) {
+        page_table[i].physical_page = -1;  // Mark as unallocated initially
+        page_table[i].is_allocated = 0;
+    }
+
+    // Create the file structure
     File new_file;
-    strcpy(new_file.filename, filename);
+    strncpy(new_file.filename, filename, MAX_FILENAME - 1);
+    new_file.filename[MAX_FILENAME - 1] = '\0';
     new_file.size = size;
-    strcpy(new_file.owner, owner);
+    strncpy(new_file.owner, owner, 19);
+    new_file.owner[19] = '\0';
     new_file.permissions = permissions;
     new_file.creation_time = time(NULL);
     new_file.modification_time = new_file.creation_time;
-    new_file.content_size = content_size;
-    new_file.content = strdup(default_content);
+    new_file.content_size = 0;
+    new_file.content = NULL;
     new_file.file_position = 0;
     new_file.page_table = page_table;
     new_file.page_table_size = pages_needed;
 
-    if (!new_file.content)
-    {
-        printf(COLOR_RED "Error: Memory allocation failed for file content\n" COLOR_RESET);
-        for (int i = 0; i < pages_needed; i++)
-        {
-            page_bitmap[page_table[i].physical_page / 8] &= ~(1 << (page_table[i].physical_page % 8));
+    // Try to allocate physical pages
+    int allocation_success = 1;
+    for (int i = 0; i < pages_needed; i++) {
+        // Find a free page
+        int page_found = 0;
+        for (int j = 0; j < TOTAL_PAGES; j++) {
+            if (!(page_bitmap[j / 8] & (1 << (j % 8)))) {
+                // Mark page as used
+                page_bitmap[j / 8] |= (1 << (j % 8));
+                page_table[i].physical_page = j;
+                page_table[i].is_allocated = 1;
+                page_found = 1;
+                break;
+            }
+        }
+        
+        if (!page_found) {
+            allocation_success = 0;
+            break;
+        }
+    }
+
+    if (!allocation_success) {
+        // Clean up any allocated pages
+        for (int i = 0; i < pages_needed; i++) {
+            if (page_table[i].is_allocated) {
+                int page_num = page_table[i].physical_page;
+                page_bitmap[page_num / 8] &= ~(1 << (page_num % 8));
+            }
         }
         free(page_table);
+        printf("Error: Not enough memory pages available\n");
         pthread_mutex_unlock(&mutex);
         return -1;
     }
 
-    // Add to directory
+    // Add file to directory
+    if (fs_state.directories[fs_state.current_directory].file_count >= MAX_FILES) {
+        // Clean up pages if directory is full
+        for (int i = 0; i < pages_needed; i++) {
+            int page_num = page_table[i].physical_page;
+            page_bitmap[page_num / 8] &= ~(1 << (page_num % 8));
+        }
+        free(page_table);
+        printf("Error: Directory is full\n");
+        pthread_mutex_unlock(&mutex);
+        return -1;
+    }
+
     fs_state.directories[fs_state.current_directory].files[fs_state.directories[fs_state.current_directory].file_count++] = new_file;
 
     save_state();
-    printf(COLOR_GREEN "File '%s' created successfully with permissions %04o\n" COLOR_RESET,
-           filename, permissions);
-    printf("Default content added: \"%s\"\n", default_content);
+    printf(COLOR_GREEN "File '%s' created successfully with %d pages\n" COLOR_RESET, filename, pages_needed);
     pthread_mutex_unlock(&mutex);
     return 0;
 }
@@ -643,35 +617,30 @@ char *get_current_working_directory()
     pthread_mutex_unlock(&mutex);
     return ptr;
 }
-
-void delete_file(char *filename)
-{
+void delete_file(char *filename) {
     pthread_mutex_lock(&mutex);
     int found = 0;
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
-        {
-            // Free content memory
-            if (fs_state.directories[fs_state.current_directory].files[i].content)
-            {
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
+            // Free pages first
+            for (int j = 0; j < fs_state.directories[fs_state.current_directory].files[i].page_table_size; j++) {
+                if (fs_state.directories[fs_state.current_directory].files[i].page_table[j].is_allocated) {
+                    int page_num = fs_state.directories[fs_state.current_directory].files[i].page_table[j].physical_page;
+                    page_bitmap[page_num / 8] &= ~(1 << (page_num % 8));
+                }
+            }
+            
+            // Free page table
+            free(fs_state.directories[fs_state.current_directory].files[i].page_table);
+            
+            // Free content if exists
+            if (fs_state.directories[fs_state.current_directory].files[i].content) {
                 free(fs_state.directories[fs_state.current_directory].files[i].content);
             }
-
-            // Free all pages used by this file
-            for (int j = 0; j < fs_state.directories[fs_state.current_directory].files[i].page_table_size; j++)
-            {
-                int page_num = fs_state.directories[fs_state.current_directory].files[i].page_table[j].physical_page;
-                page_bitmap[page_num / 8] &= ~(1 << (page_num % 8));
-            }
-
-            // Free the page table
-            free(fs_state.directories[fs_state.current_directory].files[i].page_table);
-
+            
             // Shift remaining files
-            for (int j = i; j < fs_state.directories[fs_state.current_directory].file_count - 1; j++)
-            {
-                fs_state.directories[fs_state.current_directory].files[j] =
+            for (int j = i; j < fs_state.directories[fs_state.current_directory].file_count - 1; j++) {
+                fs_state.directories[fs_state.current_directory].files[j] = 
                     fs_state.directories[fs_state.current_directory].files[j + 1];
             }
             fs_state.directories[fs_state.current_directory].file_count--;
@@ -679,15 +648,12 @@ void delete_file(char *filename)
             break;
         }
     }
-
-    if (found)
-    {
+    
+    if (found) {
         save_state();
         printf(COLOR_GREEN "File '%s' deleted successfully\n" COLOR_RESET, filename);
-    }
-    else
-    {
-        printf(COLOR_RED "Error: File '%s' not found\n" COLOR_RESET, filename);
+    } else {
+        printf("Error: File '%s' not found\n", filename);
     }
     pthread_mutex_unlock(&mutex);
 }
@@ -784,7 +750,6 @@ void delete_directory(const char *dirname)
         {
             free(file->content);
         }
-        free_blocks(file->start_block, file->blocks_used);
     }
     fs_state.directories[dir_index].file_count = 0;
 
@@ -855,32 +820,20 @@ void list_files()
     printf("--------------------------------\n");
     pthread_mutex_unlock(&mutex);
 }
-int write_to_file(const char *filename, const char *data, int append)
-{
+int write_to_file(const char *filename, const char *data, int append) {
     pthread_mutex_lock(&mutex);
-
+    
     File *file = NULL;
     // Find the file
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
-        {
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
             file = &fs_state.directories[fs_state.current_directory].files[i];
             break;
         }
     }
 
-    if (!file)
-    {
-        printf(COLOR_RED "Error: File '%s' not found\n" COLOR_RESET, filename);
-        pthread_mutex_unlock(&mutex);
-        return -1;
-    }
-
-    // Check write permissions
-    if ((file->permissions & 0222) == 0)
-    {
-        printf(COLOR_RED "Error: No write permissions for file '%s'\n" COLOR_RESET, filename);
+    if (!file) {
+        printf("Error: File not found\n");
         pthread_mutex_unlock(&mutex);
         return -1;
     }
@@ -889,148 +842,118 @@ int write_to_file(const char *filename, const char *data, int append)
     int new_content_size;
     char *new_content;
 
-    if (append)
-    {
+    if (append) {
         // Append mode
         new_content_size = file->content_size + data_len;
         new_content = realloc(file->content, new_content_size + 1);
-        if (!new_content)
-        {
-            printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
+        if (!new_content) {
+            printf("Error: Memory allocation failed\n");
             pthread_mutex_unlock(&mutex);
             return -1;
         }
         strcat(new_content, data);
-    }
-    else
-    {
-        // Overwrite mode (ignore seek position)
+    } else {
+        // Overwrite mode
         new_content_size = data_len;
         new_content = strdup(data);
-        if (!new_content)
-        {
-            printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
+        if (!new_content) {
+            printf("Error: Memory allocation failed\n");
             pthread_mutex_unlock(&mutex);
             return -1;
         }
-        // Reset position on overwrite
-        file->file_position = 0;
     }
 
-    // Update file properties
-    if (file->content)
-        free(file->content);
+    // Check if we need more pages
+    int pages_needed = (new_content_size + PAGE_SIZE - 1) / PAGE_SIZE;
+    if (pages_needed > file->page_table_size) {
+        PageTableEntry *new_table = realloc(file->page_table, pages_needed * sizeof(PageTableEntry));
+        if (!new_table) {
+            printf("Error: Could not expand page table\n");
+            free(new_content);
+            pthread_mutex_unlock(&mutex);
+            return -1;
+        }
+        
+        // Allocate new pages
+        for (int i = file->page_table_size; i < pages_needed; i++) {
+            int page = -1;
+            for (int j = 0; j < TOTAL_PAGES; j++) {
+                if (!(page_bitmap[j / 8] & (1 << (j % 8)))) {
+                    page_bitmap[j / 8] |= (1 << (j % 8));
+                    new_table[i].physical_page = j;
+                    new_table[i].is_allocated = 1;
+                    page = j;
+                    break;
+                }
+            }
+            if (page == -1) {
+                // Cleanup
+                for (int k = file->page_table_size; k < i; k++) {
+                    page_bitmap[new_table[k].physical_page / 8] &= ~(1 << (new_table[k].physical_page % 8));
+                }
+                free(new_content);
+                pthread_mutex_unlock(&mutex);
+                return -1;
+            }
+        }
+        
+        file->page_table = new_table;
+        file->page_table_size = pages_needed;
+    }
+
+    // Update file content
+    if (file->content) free(file->content);
     file->content = new_content;
     file->content_size = new_content_size;
-    file->size = new_content_size; // For compatibility
+    file->size = new_content_size;
     file->modification_time = time(NULL);
 
-    // Update block usage if needed
-    int blocks_needed = (new_content_size / BLOCK_SIZE) + 1;
-    if (blocks_needed != file->blocks_used)
-    {
-        free_blocks(file->start_block, file->blocks_used);
-        file->start_block = allocate_blocks(blocks_needed);
-        if (file->start_block == -1)
-        {
-            printf(COLOR_RED "Error: Not enough space for file expansion\n" COLOR_RESET);
-            pthread_mutex_unlock(&mutex);
-            return -1;
-        }
-        file->blocks_used = blocks_needed;
-    }
-
     save_state();
-    printf(COLOR_GREEN "Wrote %d bytes to '%s' (new size: %d bytes)\n" COLOR_RESET,
-           data_len, filename, new_content_size);
-
     pthread_mutex_unlock(&mutex);
     return data_len;
 }
 
-char *read_from_file(const char *filename, int bytes_to_read)
-{
+char *read_from_file(const char *filename, int bytes_to_read) {
     pthread_mutex_lock(&mutex);
-
+    
     File *file = NULL;
     // Find the file
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
-        {
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
             file = &fs_state.directories[fs_state.current_directory].files[i];
             break;
         }
     }
 
-    if (!file)
-    {
-        printf(COLOR_RED "Error: File '%s' not found\n" COLOR_RESET, filename);
-        pthread_mutex_unlock(&mutex);
-        return NULL;
-    }
-
-    // Check read permissions
-    if ((file->permissions & 0444) == 0)
-    {
-        printf(COLOR_RED "Error: No read permissions for file '%s'\n" COLOR_RESET, filename);
+    if (!file) {
+        printf("Error: File not found\n");
         pthread_mutex_unlock(&mutex);
         return NULL;
     }
 
     // Handle EOF
-    if (file->file_position >= file->content_size)
-    {
+    if (file->file_position >= file->content_size) {
         pthread_mutex_unlock(&mutex);
         return strdup(""); // Return empty string at EOF
     }
 
     // Calculate how many bytes we can actually read
     int remaining_bytes = file->content_size - file->file_position;
-    int read_bytes = (bytes_to_read <= 0) ? remaining_bytes : (bytes_to_read < remaining_bytes) ? bytes_to_read
-                                                                                                : remaining_bytes;
+    int read_bytes = (bytes_to_read <= 0) ? remaining_bytes : 
+                    (bytes_to_read < remaining_bytes) ? bytes_to_read : remaining_bytes;
 
-    // Calculate which pages we need to read from
-    int start_page = file->file_position / PAGE_SIZE;
-    int end_page = (file->file_position + read_bytes - 1) / PAGE_SIZE;
-    int start_offset = file->file_position % PAGE_SIZE;
-
-    // Allocate buffer and copy data
+    // Allocate buffer
     char *buffer = malloc(read_bytes + 1);
-    if (!buffer)
-    {
-        printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
+    if (!buffer) {
+        printf("Error: Memory allocation failed\n");
         pthread_mutex_unlock(&mutex);
         return NULL;
     }
 
-    char *current_pos = buffer;
-    int bytes_remaining = read_bytes;
-
-    for (int i = start_page; i <= end_page && bytes_remaining > 0; i++)
-    {
-        if (i >= file->page_table_size || !file->page_table[i].is_allocated)
-        {
-            break;
-        }
-
-        int bytes_in_page = PAGE_SIZE - start_offset;
-        if (bytes_in_page > bytes_remaining)
-        {
-            bytes_in_page = bytes_remaining;
-        }
-
-        // In a real implementation, you would read from disk here
-        // For this simulation, we'll just read from the content buffer
-        memcpy(current_pos, file->content + (i * PAGE_SIZE) + start_offset, bytes_in_page);
-
-        current_pos += bytes_in_page;
-        bytes_remaining -= bytes_in_page;
-        start_offset = 0; // For subsequent pages, start at beginning
-    }
-
-    buffer[read_bytes] = '\0'; // Null-terminate
-
+    // Copy data
+    memcpy(buffer, file->content + file->file_position, read_bytes);
+    buffer[read_bytes] = '\0';
+    
     // Update position
     file->file_position += read_bytes;
     file->modification_time = time(NULL);
@@ -1077,7 +1000,6 @@ void print_file_info(const char *filename)
             File *f = &fs_state.directories[fs_state.current_directory].files[i];
             printf("\nFile: %s\n", f->filename);
             printf("Size: %d bytes\n", f->size);
-            printf("Blocks used: %d (starting at block %d)\n", f->blocks_used, f->start_block);
             printf("Owner: %s\n", f->owner);
             printf("Permissions: %04o\n", f->permissions);
             printf("Created: %s", ctime(&f->creation_time));
@@ -1237,18 +1159,9 @@ void copy_file_to_dir(const char *filename, const char *dirname)
         return;
     }
 
-    // Allocate new blocks for the copy
-    int new_start_block = allocate_blocks(src_file->blocks_used);
-    if (new_start_block == -1)
-    {
-        printf(COLOR_RED "Error: Not enough space for copy\n" COLOR_RESET);
-        pthread_mutex_unlock(&mutex);
-        return;
-    }
 
     // Create the copy
     File new_file = *src_file;
-    new_file.start_block = new_start_block;
     new_file.creation_time = time(NULL);
     new_file.modification_time = new_file.creation_time;
 
@@ -1368,7 +1281,6 @@ void create_hard_link(const char *source, const char *link)
         }
     }
 
-    // Create the hard link (just another file entry pointing to same blocks)
     if (fs_state.directories[fs_state.current_directory].file_count >= MAX_FILES)
     {
         printf(COLOR_RED "Error: Directory full\n" COLOR_RESET);
@@ -1429,20 +1341,16 @@ void create_symbolic_link(const char *source, const char *link)
     File symlink;
     strcpy(symlink.filename, link);
     symlink.size = strlen(source);
-    symlink.blocks_used = 1;
-    symlink.start_block = allocate_blocks(1);
-    if (symlink.start_block == -1)
-    {
-        printf(COLOR_RED "Error: Not enough space for symlink\n" COLOR_RESET);
-        pthread_mutex_unlock(&mutex);
-        return;
-    }
+
     strcpy(symlink.owner, fs_state.users[0].username); // Use current user
     symlink.permissions = 0777;                        // Common permission for symlinks
     symlink.creation_time = time(NULL);
     symlink.modification_time = symlink.creation_time;
 
     fs_state.directories[fs_state.current_directory].files[fs_state.directories[fs_state.current_directory].file_count++] = symlink;
+    
+    symlink.content = strdup(source);
+    symlink.content_size = strlen(source) + 1;
 
     save_state();
     printf(COLOR_GREEN "Created symbolic link '%s' -> '%s'\n" COLOR_RESET, link, source);
@@ -1456,29 +1364,24 @@ void help()
 
     // File operations
     printf("File Operations:\n");
-    printf("  create <filename> <size> <permissions> - Create new file (permissions in octal)\n");
-    printf("  delete <filename>                      - Delete a file\n");
-    printf("  delete -d <dirname>                   - Delete an empty directory\n");
-    printf("  write [-a] <file> <data>              - Write data to file (-a for append)\n");
-    printf("  read <file> [bytes]                   - Read content from file (optional byte count)\n");
-    printf("  seek <file> <offset> <SET|CUR|END>    - Move read position in file\n");
-    printf("  chmod <mode> <file>                   - Change file permissions\n");
-    printf("  stat <file>                           - Show file information\n");
-
+    printf("  create <filename> <size> <permissions>  - Create new file (permissions in octal)\n");
+    printf("  delete <filename>                       - Delete a file\n");
+    printf("  delete -d <dirname>                     - Delete an empty directory\n");
+    printf("  write [-a] <file> <data>                - Write data to file (-a for append)\n");
+    printf("  read <file> [bytes]                     - Read content from file (optional byte count)\n");
+    printf("  seek <file> <offset> <SET|CUR|END>      - Move read position in file\n");
+    printf("  chmod <permissions> <file               - Change file permissions\n");
+    printf("  stat <file>                             - Show file information\n");
+    
+    
     // Directory operations
     printf("\nDirectory Operations:\n");
     printf("  create -d <dirname>                   - Create new directory\n");
+    printf("  cd <dirname>                          - Change directory (default: /home)\n");
     printf("  list                                  - List directory contents\n");
     printf("  pwd                                   - Print current directory path\n");
     printf("  copy <file> <directory>               - Copy file to another directory\n");
     printf("  move <file> <directory>               - Move file to another directory\n");
-
-    printf("\Changing Directory:\n");
-    printf("  cd <dirname>       - Change directory (default: /home)\n");
-    printf("  cd /               - Go to root directory\n");
-    printf("  cd ..              - Go to parent directory\n");
-    printf("  cd dir             - Go to subdirectory 'dir'\n");
-    printf("  cd /path/to/dir    - Go to absolute path\n");
 
     // Link operations
     printf("\nLink Operations:\n");
@@ -1487,18 +1390,9 @@ void help()
 
     // System operations
     printf("\nSystem Operations:\n");
+    printf("  showages                              - Show paging bitmap\n");
     printf("  help                                  - Show this help message\n");
     printf("  quit                                  - Exit the terminal\n");
-
-    printf("\nSeek Position Examples:\n");
-    printf("  seek file.txt 10 SET    - Move to position 10 from start\n");
-    printf("  seek file.txt 5 CUR     - Move 5 bytes forward\n");
-    printf("  seek file.txt -3 END    - Move 3 bytes before end\n");
-
-    printf("\nPermission Examples:\n");
-    printf("  644 - Owner: read/write, Others: read\n");
-    printf("  755 - Owner: all, Others: read/execute\n");
-    printf("  600 - Owner: read/write, Others: none\n");
 
     printf("\n");
 }
