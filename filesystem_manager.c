@@ -21,7 +21,7 @@
 #define STORAGE_FILE "filesystem.dat"
 
 // ANSI color codes
-#define COLOR_QUEUE "\033[1;33m"
+#define COLOR_YELLOW "\033[1;33m"
 #define COLOR_BLUE "\033[1;34m"
 #define COLOR_GREEN "\033[1;32m"
 #define COLOR_RED "\033[1;31m"
@@ -364,6 +364,7 @@ int create_file(char *filename, int size, char *owner, int permissions)
     new_file.modification_time = new_file.creation_time;
     new_file.content_size = content_size;
     new_file.content = strdup(default_content); // Allocate and copy content
+    new_file.file_position = 0;
 
     if (!new_file.content) {
         printf(COLOR_RED "Error: Memory allocation failed for file content\n" COLOR_RESET);
@@ -619,10 +620,20 @@ void delete_directory(const char *dirname)
 void list_files()
 {
     pthread_mutex_lock(&mutex);
+    
+    // Count actual existing directories
+    int dir_count = 0;
+    for (int i = 0; i < MAX_DIRECTORIES; i++) {
+        if (strlen(fs_state.directories[i].dirname) > 0) {
+            dir_count++;
+        }
+    }
+
     printf("\nCurrent directory: %d (%s)\n", fs_state.current_directory,
            fs_state.directories[fs_state.current_directory].dirname);
-    printf("Total directories: %d\n", MAX_DIRECTORIES);
+    printf("Existing directories: %d\n", dir_count);  // Changed from "Total directories"
     printf("File count: %d\n", fs_state.directories[fs_state.current_directory].file_count);
+
 
     printf("\nContents of directory '%s':\n", fs_state.directories[fs_state.current_directory].dirname);
     printf("--------------------------------\n");
@@ -840,94 +851,74 @@ void print_file_info(const char *filename)
     pthread_mutex_unlock(&mutex);
 }
 
-void change_directory(char *dirname)
-{
+void change_directory(char *dirname) {
+    // First get current directory info WITHOUT locking
+    int current_dir = fs_state.current_directory;
+    int parent_dir = fs_state.directories[current_dir].parent_directory;
+    char current_dirname[MAX_FILENAME];
+    strcpy(current_dirname, fs_state.directories[current_dir].dirname);
+
+    // Now lock only for the actual directory change
     pthread_mutex_lock(&mutex);
 
-    // Handle absolute paths (starting with '/')
-    if (dirname[0] == '/')
-    {
-        int target_dir = 0; // Start at root
-        char *token = strtok(dirname + 1, "/");
-
-        while (token != NULL)
-        {
-            int found = -1;
-
-            // Special case for parent directory
-            if (strcmp(token, "..") == 0)
-            {
-                if (fs_state.directories[target_dir].parent_directory != -1)
-                {
-                    target_dir = fs_state.directories[target_dir].parent_directory;
-                }
-                token = strtok(NULL, "/");
-                continue;
-            }
-
-            // Look for matching directory
-            for (int i = 0; i < MAX_DIRECTORIES; i++)
-            {
-                if (strcmp(fs_state.directories[i].dirname, token) == 0 &&
-                    fs_state.directories[i].parent_directory == target_dir)
-                {
-                    found = i;
-                    break;
-                }
-            }
-
-            if (found == -1)
-            {
-                printf(COLOR_RED "Error: Directory '%s' not found in '%s'\n" COLOR_RESET,
-                       token, fs_state.directories[target_dir].dirname);
-                pthread_mutex_unlock(&mutex);
-                return;
-            }
-
-            target_dir = found;
-            token = strtok(NULL, "/");
-        }
-
-        fs_state.current_directory = target_dir;
-        printf(COLOR_GREEN "Changed directory to '%s'\n" COLOR_RESET,
-               get_current_working_directory());
+    // Handle special cases
+    if (strcmp(dirname, ".") == 0) {
         pthread_mutex_unlock(&mutex);
         return;
     }
 
-    // Handle relative paths (original implementation)
-    int found = -1;
-
-    if (strcmp(dirname, "..") == 0)
-    {
-        if (fs_state.directories[fs_state.current_directory].parent_directory != -1)
-        {
-            found = fs_state.directories[fs_state.current_directory].parent_directory;
+    if (strcmp(dirname, "..") == 0) {
+        if (parent_dir != -1) {
+            fs_state.current_directory = parent_dir;
+            printf(COLOR_GREEN "Changed to parent directory\n" COLOR_RESET);
+        } else {
+            printf(COLOR_RED "Already at root directory\n" COLOR_RESET);
         }
+        pthread_mutex_unlock(&mutex);
+        return;
     }
-    else
-    {
-        for (int i = 0; i < MAX_DIRECTORIES; i++)
-        {
-            if (strcmp(fs_state.directories[i].dirname, dirname) == 0 &&
-                fs_state.directories[i].parent_directory == fs_state.current_directory)
-            {
-                found = i;
-                break;
+
+    // Handle absolute paths
+    if (dirname[0] == '/') {
+        int target_dir = 0; // Start at root
+        char *path = dirname + 1;
+        char *token = strtok(path, "/");
+        
+        while (token != NULL) {
+            int found = -1;
+            for (int i = 0; i < MAX_DIRECTORIES; i++) {
+                if (strcmp(fs_state.directories[i].dirname, token) == 0 &&
+                    fs_state.directories[i].parent_directory == target_dir) {
+                    found = i;
+                    break;
+                }
             }
+            
+            if (found == -1) {
+                printf(COLOR_RED "Directory not found: %s\n" COLOR_RESET, token);
+                pthread_mutex_unlock(&mutex);
+                return;
+            }
+            target_dir = found;
+            token = strtok(NULL, "/");
+        }
+        
+        fs_state.current_directory = target_dir;
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    // Handle relative paths
+    for (int i = 0; i < MAX_DIRECTORIES; i++) {
+        if (strcmp(fs_state.directories[i].dirname, dirname) == 0 &&
+            fs_state.directories[i].parent_directory == current_dir) {
+            fs_state.current_directory = i;
+            pthread_mutex_unlock(&mutex);
+            return;
         }
     }
 
-    if (found != -1)
-    {
-        fs_state.current_directory = found;
-        printf(COLOR_GREEN "Changed directory to '%s'\n" COLOR_RESET,
-               get_current_working_directory());
-    }
-    else
-    {
-        printf(COLOR_RED "Error: Directory '%s' not found\n" COLOR_RESET, dirname);
-    }
+    printf(COLOR_RED "Directory not found: %s\n" COLOR_RESET, dirname);
     pthread_mutex_unlock(&mutex);
 }
 
@@ -1221,11 +1212,17 @@ void help() {
     printf("\nDirectory Operations:\n");
     printf("  create -d <dirname>                   - Create new directory\n");
     printf("  list                                  - List directory contents\n");
-    printf("  cd <dirname>                          - Change directory\n");
     printf("  pwd                                   - Print current directory path\n");
     printf("  copy <file> <directory>               - Copy file to another directory\n");
     printf("  move <file> <directory>               - Move file to another directory\n");
     
+    printf("\Changing Directory:\n");
+    printf("  cd <dirname>       - Change directory (default: /home)\n");
+    printf("  cd /               - Go to root directory\n");
+    printf("  cd ..              - Go to parent directory\n");
+    printf("  cd dir             - Go to subdirectory 'dir'\n");
+    printf("  cd /path/to/dir    - Go to absolute path\n");
+
     // Link operations
     printf("\nLink Operations:\n");
     printf("  ln <source> <link>                    - Create hard link\n");
@@ -1329,16 +1326,13 @@ void execute_job(Job job)
             printf("Usage: seek <filename> <offset> <SET|CUR|END>\n");
         }
     }
-    else if (strncmp(command, "cd", 2) == 0)
-    {
+    else if (strncmp(command, "cd", 2) == 0) {
         char dirname[MAX_FILENAME];
-        if (sscanf(command, "cd %s", dirname) == 1)
-        {
+        if (sscanf(command, "cd %s", dirname) == 1) {
             change_directory(dirname);
-        }
-        else
-        {
-            printf(COLOR_RED "Usage: cd <dirname>\n" COLOR_RESET);
+        } else {
+            // If no argument given, go to home directory
+            change_directory("/root");
         }
     }
     else if (strcmp(command, "help") == 0)
@@ -1399,6 +1393,8 @@ void execute_job(Job job)
                     printf("Current position: %d/%d\n", 
                            fs_state.directories[fs_state.current_directory].files[i].file_position,
                            fs_state.directories[fs_state.current_directory].files[i].content_size);
+                           printf(COLOR_YELLOW "To change position use seek command. \n" COLOR_YELLOW);
+
                     break;
                 }
             }
@@ -1548,10 +1544,10 @@ void execute_job(Job job)
 
 void print_queue(int current_job_index)
 {
-    printf(COLOR_QUEUE "Command Queue:\n" COLOR_RESET);
+    printf(COLOR_YELLOW "Command Queue:\n" COLOR_RESET);
     if (job_count == 0)
     {
-        printf(COLOR_QUEUE "  [Empty]\n" COLOR_RESET);
+        printf(COLOR_YELLOW "  [Empty]\n" COLOR_RESET);
         return;
     }
 
@@ -1560,11 +1556,11 @@ void print_queue(int current_job_index)
         int idx = (front + i) % MAX_JOBS;
         if (i == current_job_index)
         {
-            printf(COLOR_QUEUE "  > %s (Running)\n" COLOR_RESET, job_queue[idx].command);
+            printf(COLOR_YELLOW "  > %s (Running)\n" COLOR_RESET, job_queue[idx].command);
         }
         else
         {
-            printf(COLOR_QUEUE "  - %s\n" COLOR_RESET, job_queue[idx].command);
+            printf(COLOR_YELLOW "  - %s\n" COLOR_RESET, job_queue[idx].command);
         }
     }
 }
