@@ -27,6 +27,12 @@
 #define COLOR_RED "\033[1;31m"
 #define COLOR_RESET "\033[0m"
 
+
+#define SEEK_SET 0  // Seek from beginning of file
+#define SEEK_CUR 1  // Seek from current position
+#define SEEK_END 2  // Seek from end of file
+
+
 typedef struct
 {
     char *command;
@@ -42,6 +48,9 @@ typedef struct
     int permissions;
     time_t creation_time;
     time_t modification_time;
+    int content_size; // Add this to track content size
+    char *content;    // Pointer to actual content
+    int file_position;  // Add this for seek functionality
 } File;
 
 typedef struct
@@ -86,6 +95,8 @@ int create_file(char *filename, int size, char *owner, int permissions);
 int create_directory(char *dirname);
 void delete_file(char *filename);
 void list_files();
+int write_to_file(const char *filename, const char *data, int append);
+char *read_from_file(const char *filename, int bytes_to_read );
 int login();
 int find_directory_index(const char *dirname);
 void copy_file_to_dir(const char *filename, const char *dirname);
@@ -105,36 +116,42 @@ void handle_signal(int sig);
 
 void initialize_directories()
 {
-    // Initialize root directory
-    strcpy(fs_state.directories[0].dirname, "root");
-    fs_state.directories[0].file_count = 0;
-    fs_state.directories[0].parent_directory = -1;
-    fs_state.directories[0].creation_time = time(NULL);
-
-    // Create a default directory
-    strcpy(fs_state.directories[1].dirname, "home");
-    fs_state.directories[1].file_count = 0;
-    fs_state.directories[1].parent_directory = 0;
-    fs_state.directories[1].creation_time = time(NULL);
-
-    fs_state.current_directory = 0;
-
-    // Create default users
-    strcpy(fs_state.users[0].username, "user1");
-    strcpy(fs_state.users[0].password, "pass1");
-    strcpy(fs_state.users[1].username, "user2");
-    strcpy(fs_state.users[1].password, "pass2");
-
-    // Create some default files
-    File file1 = {"readme.txt", 16, 4, 0, "user1", 0644, time(NULL), time(NULL)};
-    File file2 = {"notes.txt", 8, 2, 4, "user2", 0600, time(NULL), time(NULL)};
-    fs_state.directories[0].files[fs_state.directories[0].file_count++] = file1;
-    fs_state.directories[0].files[fs_state.directories[0].file_count++] = file2;
-
-    // Mark blocks as used
-    for (int i = 0; i < file1.blocks_used + file2.blocks_used; i++)
+    if (strlen(fs_state.directories[0].dirname) == 0)
     {
-        fs_state.block_map[i] = 1;
+
+        // Initialize root directory
+        strcpy(fs_state.directories[0].dirname, "root");
+        fs_state.directories[0].file_count = 0;
+        fs_state.directories[0].parent_directory = -1;
+        fs_state.directories[0].creation_time = time(NULL);
+
+        // Create a default directory
+        strcpy(fs_state.directories[1].dirname, "home");
+        fs_state.directories[1].file_count = 0;
+        fs_state.directories[1].parent_directory = 0;
+        fs_state.directories[1].creation_time = time(NULL);
+
+        fs_state.current_directory = 0;
+
+        // Create default users
+        strcpy(fs_state.users[0].username, "ikram");
+        strcpy(fs_state.users[0].password, "ikrampass");
+        strcpy(fs_state.users[1].username, "ines");
+        strcpy(fs_state.users[1].password, "inespass");
+        strcpy(fs_state.users[1].username, "ali");
+        strcpy(fs_state.users[1].password, "alipass");
+
+        // Create some default files
+        File file1 = {"readme.txt", 16, 4, 0, "user1", 0644, time(NULL), time(NULL), strlen("HELLO WORLD") + 1, "HELLO WORLD",0};
+        File file2 = {"notes.txt", 8, 2, 4, "user2", 0600, time(NULL), time(NULL), strlen("HELLO WORLD") + 1, "HELLO WORLD",0};
+        fs_state.directories[0].files[fs_state.directories[0].file_count++] = file1;
+        fs_state.directories[0].files[fs_state.directories[0].file_count++] = file2;
+
+        // Mark blocks as used
+        for (int i = 0; i < file1.blocks_used + file2.blocks_used; i++)
+        {
+            fs_state.block_map[i] = 1;
+        }
     }
 }
 
@@ -143,21 +160,105 @@ void save_state()
     FILE *fp = fopen(STORAGE_FILE, "wb");
     if (fp)
     {
-        fwrite(&fs_state, sizeof(FileSystemState), 1, fp);
+        // Save main structure without content pointers
+        size_t base_size = sizeof(fs_state) - sizeof(File) * MAX_DIRECTORIES * MAX_FILES;
+        fwrite(&fs_state, base_size, 1, fp);
+
+        // Save directory structures without file content
+        for (int i = 0; i < MAX_DIRECTORIES; i++)
+        {
+            size_t dir_size = sizeof(Directory) - sizeof(File) * MAX_FILES;
+            fwrite(&fs_state.directories[i], dir_size, 1, fp);
+
+            // Save file metadata and content
+            for (int j = 0; j < fs_state.directories[i].file_count; j++)
+            {
+                File *file = &fs_state.directories[i].files[j];
+                size_t file_meta_size = sizeof(File) - sizeof(char *);
+                fwrite(file, file_meta_size, 1, fp);
+
+                // Save content with size prefix
+                if (file->content && file->content_size > 0)
+                {
+                    fwrite(file->content, 1, file->content_size, fp);
+                }
+            }
+        }
+
+        // Save block map
+        fwrite(fs_state.block_map, sizeof(fs_state.block_map), 1, fp);
         fclose(fp);
     }
 }
 
 void load_state()
 {
+    printf("Attempting to load state...\n");
     FILE *fp = fopen(STORAGE_FILE, "rb");
     if (fp)
     {
-        fread(&fs_state, sizeof(FileSystemState), 1, fp);
+        printf("Found existing filesystem.dat\n");
+        // Load base structure
+        size_t base_size = sizeof(fs_state) - sizeof(File) * MAX_DIRECTORIES * MAX_FILES;
+        if (fread(&fs_state, base_size, 1, fp) != 1)
+        {
+            printf("Error reading base structure, initializing new one\n");
+            fclose(fp);
+            initialize_directories();
+            return;
+        }
+
+        // Load directories
+        for (int i = 0; i < MAX_DIRECTORIES; i++)
+        {
+            size_t dir_size = sizeof(Directory) - sizeof(File) * MAX_FILES;
+            if (fread(&fs_state.directories[i], dir_size, 1, fp) != 1)
+            {
+                printf("Error reading directory %d, initializing new one\n", i);
+                fclose(fp);
+                initialize_directories();
+                return;
+            }
+
+            // Load files
+            for (int j = 0; j < fs_state.directories[i].file_count; j++)
+            {
+                File *file = &fs_state.directories[i].files[j];
+                size_t file_meta_size = sizeof(File) - sizeof(char *);
+                if (fread(file, file_meta_size, 1, fp) != 1)
+                {
+                    printf("Error reading file %d in directory %d\n", j, i);
+                    break;
+                }
+
+                // Load content
+                if (file->content_size > 0)
+                {
+                    file->content = malloc(file->content_size);
+                    if (fread(file->content, 1, file->content_size, fp) != file->content_size)
+                    {
+                        printf("Error reading file content\n");
+                        free(file->content);
+                        file->content = NULL;
+                    }
+                }
+                else
+                {
+                    file->content = NULL;
+                }
+            }
+        }
+
+        // Load block map
+        if (fread(fs_state.block_map, sizeof(fs_state.block_map), 1, fp) != 1)
+        {
+            printf("Error reading block map\n");
+        }
         fclose(fp);
     }
     else
     {
+        printf("No existing filesystem found, initializing new one\n");
         initialize_directories();
     }
 }
@@ -199,6 +300,31 @@ void free_blocks(int start_block, int blocks_used)
     }
 }
 
+int file_seek(File *file, int offset, int whence) {
+    int new_position;
+    
+    switch(whence) {
+        case SEEK_SET:  // From beginning
+            new_position = offset;
+            break;
+        case SEEK_CUR:  // From current position
+            new_position = file->file_position + offset;
+            break;
+        case SEEK_END:  // From end
+            new_position = file->content_size + offset;
+            break;
+        default:
+            return -1;  // Invalid whence
+    }
+    
+    // Validate position
+    if (new_position < 0) new_position = 0;
+    if (new_position > file->content_size) new_position = file->content_size;
+    
+    file->file_position = new_position;
+    return new_position;
+}
+
 int create_file(char *filename, int size, char *owner, int permissions)
 {
     pthread_mutex_lock(&mutex);
@@ -223,6 +349,10 @@ int create_file(char *filename, int size, char *owner, int permissions)
         return -1;
     }
 
+    // Create default content
+    const char *default_content = "HELLO WORLD";
+    int content_size = strlen(default_content) + 1; // +1 for null terminator
+    
     File new_file;
     strcpy(new_file.filename, filename);
     new_file.size = size;
@@ -232,12 +362,23 @@ int create_file(char *filename, int size, char *owner, int permissions)
     new_file.permissions = permissions;
     new_file.creation_time = time(NULL);
     new_file.modification_time = new_file.creation_time;
+    new_file.content_size = content_size;
+    new_file.content = strdup(default_content); // Allocate and copy content
 
+    if (!new_file.content) {
+        printf(COLOR_RED "Error: Memory allocation failed for file content\n" COLOR_RESET);
+        free_blocks(start_block, blocks_needed);
+        pthread_mutex_unlock(&mutex);
+        return -1;
+    }
+
+    // Add to directory
     fs_state.directories[fs_state.current_directory].files[fs_state.directories[fs_state.current_directory].file_count++] = new_file;
 
     save_state();
     printf(COLOR_GREEN "File '%s' created successfully with permissions %04o\n" COLOR_RESET,
            filename, permissions);
+    printf("Default content added: \"%s\"\n", default_content);
     pthread_mutex_unlock(&mutex);
     return 0;
 }
@@ -278,6 +419,48 @@ int create_directory(char *dirname)
     return -1;
 }
 
+char *get_current_working_directory()
+{
+    pthread_mutex_lock(&mutex);
+
+    static char path[1024] = {0};
+    int current = fs_state.current_directory;
+    int parent = fs_state.directories[current].parent_directory;
+
+    // Start from current directory and work backwards to root
+    char *ptr = path + sizeof(path) - 1;
+    *ptr = '\0';
+
+    while (current != -1)
+    {
+        const char *dirname = fs_state.directories[current].dirname;
+        size_t len = strlen(dirname);
+
+        ptr -= len;
+        memcpy(ptr, dirname, len);
+
+        if (parent != -1)
+        {
+            *--ptr = '/';
+        }
+
+        current = parent;
+        if (current != -1)
+        {
+            parent = fs_state.directories[current].parent_directory;
+        }
+    }
+
+    // If we're at root, make sure we have a leading slash
+    if (*ptr != '/')
+    {
+        *--ptr = '/';
+    }
+
+    pthread_mutex_unlock(&mutex);
+    return ptr;
+}
+
 void delete_file(char *filename)
 {
     pthread_mutex_lock(&mutex);
@@ -286,6 +469,11 @@ void delete_file(char *filename)
     {
         if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
         {
+            // Free content memory
+            if (fs_state.directories[fs_state.current_directory].files[i].content)
+            {
+                free(fs_state.directories[fs_state.current_directory].files[i].content);
+            }
             free_blocks(fs_state.directories[fs_state.current_directory].files[i].start_block,
                         fs_state.directories[fs_state.current_directory].files[i].blocks_used);
 
@@ -313,9 +501,129 @@ void delete_file(char *filename)
     pthread_mutex_unlock(&mutex);
 }
 
+void delete_directory(const char *dirname)
+{
+    pthread_mutex_lock(&mutex);
+
+    int dir_index = -1;
+    int parent_dir = fs_state.current_directory;
+
+    // Find the directory
+    for (int i = 0; i < MAX_DIRECTORIES; i++)
+    {
+        if (strcmp(fs_state.directories[i].dirname, dirname) == 0 &&
+            fs_state.directories[i].parent_directory == parent_dir)
+        {
+            dir_index = i;
+            break;
+        }
+    }
+
+    if (dir_index == -1)
+    {
+        printf(COLOR_RED "Error: Directory '%s' not found\n" COLOR_RESET, dirname);
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    // Don't allow deleting root directory
+    if (dir_index == 0)
+    {
+        printf(COLOR_RED "Error: Cannot delete root directory\n" COLOR_RESET);
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    // Don't allow deleting current directory
+    if (dir_index == fs_state.current_directory)
+    {
+        printf(COLOR_RED "Error: Cannot delete current directory\n" COLOR_RESET);
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    // Check if directory is empty or has subdirectories
+    int needs_confirmation = 0;
+    if (fs_state.directories[dir_index].file_count > 0)
+    {
+        needs_confirmation = 1;
+        printf(COLOR_RED "Warning: Directory '%s' is not empty (%d files)\n" COLOR_RESET, 
+               dirname, fs_state.directories[dir_index].file_count);
+    }
+
+    // Check for subdirectories
+    for (int i = 0; i < MAX_DIRECTORIES; i++)
+    {
+        if (fs_state.directories[i].parent_directory == dir_index &&
+            strlen(fs_state.directories[i].dirname) > 0)
+        {
+            needs_confirmation = 1;
+            printf(COLOR_RED "Warning: Directory '%s' contains subdirectories\n" COLOR_RESET, dirname);
+            break;
+        }
+    }
+
+    // Ask for confirmation if not empty
+    if (needs_confirmation)
+    {
+        printf(COLOR_RED "Are you sure you want to delete '%s' and all its contents? [Y/n] " COLOR_RESET, dirname);
+        fflush(stdout);
+
+        char response[10];
+        if (fgets(response, sizeof(response), stdin) == NULL) {
+            pthread_mutex_unlock(&mutex);
+            return;
+        }
+
+        // Check response (default to 'Y' if empty)
+        if (response[0] != '\n' && tolower(response[0]) != 'y') {
+            printf("Deletion cancelled\n");
+            pthread_mutex_unlock(&mutex);
+            return;
+        }
+    }
+
+    // Delete all files in the directory first
+    for (int i = 0; i < fs_state.directories[dir_index].file_count; i++)
+    {
+        File *file = &fs_state.directories[dir_index].files[i];
+        if (file->content) {
+            free(file->content);
+        }
+        free_blocks(file->start_block, file->blocks_used);
+    }
+    fs_state.directories[dir_index].file_count = 0;
+
+    // Delete any subdirectories (recursive)
+    for (int i = 0; i < MAX_DIRECTORIES; i++)
+    {
+        if (fs_state.directories[i].parent_directory == dir_index &&
+            strlen(fs_state.directories[i].dirname) > 0)
+        {
+            // Temporarily unlock mutex for recursive call
+            pthread_mutex_unlock(&mutex);
+            delete_directory(fs_state.directories[i].dirname);
+            pthread_mutex_lock(&mutex);
+        }
+    }
+
+    // Clear the directory entry
+    memset(fs_state.directories[dir_index].dirname, 0, MAX_FILENAME);
+    fs_state.directories[dir_index].parent_directory = -1;
+
+    save_state();
+    printf(COLOR_GREEN "Directory '%s' deleted successfully\n" COLOR_RESET, dirname);
+    pthread_mutex_unlock(&mutex);
+}
+
 void list_files()
 {
     pthread_mutex_lock(&mutex);
+    printf("\nCurrent directory: %d (%s)\n", fs_state.current_directory,
+           fs_state.directories[fs_state.current_directory].dirname);
+    printf("Total directories: %d\n", MAX_DIRECTORIES);
+    printf("File count: %d\n", fs_state.directories[fs_state.current_directory].file_count);
+
     printf("\nContents of directory '%s':\n", fs_state.directories[fs_state.current_directory].dirname);
     printf("--------------------------------\n");
 
@@ -341,6 +649,140 @@ void list_files()
     }
     printf("--------------------------------\n");
     pthread_mutex_unlock(&mutex);
+}
+int write_to_file(const char *filename, const char *data, int append) {
+    pthread_mutex_lock(&mutex);
+    
+    File *file = NULL;
+    // Find the file
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
+            file = &fs_state.directories[fs_state.current_directory].files[i];
+            break;
+        }
+    }
+
+    if (!file) {
+        printf(COLOR_RED "Error: File '%s' not found\n" COLOR_RESET, filename);
+        pthread_mutex_unlock(&mutex);
+        return -1;
+    }
+
+    // Check write permissions
+    if ((file->permissions & 0222) == 0) {
+        printf(COLOR_RED "Error: No write permissions for file '%s'\n" COLOR_RESET, filename);
+        pthread_mutex_unlock(&mutex);
+        return -1;
+    }
+
+    int data_len = strlen(data);
+    int new_content_size;
+    char *new_content;
+
+    if (append) {
+        // Append mode
+        new_content_size = file->content_size + data_len;
+        new_content = realloc(file->content, new_content_size + 1);
+        if (!new_content) {
+            printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
+            pthread_mutex_unlock(&mutex);
+            return -1;
+        }
+        strcat(new_content, data);
+    } else {
+        // Overwrite mode (ignore seek position)
+        new_content_size = data_len;
+        new_content = strdup(data);
+        if (!new_content) {
+            printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
+            pthread_mutex_unlock(&mutex);
+            return -1;
+        }
+        // Reset position on overwrite
+        file->file_position = 0;
+    }
+
+    // Update file properties
+    if (file->content) free(file->content);
+    file->content = new_content;
+    file->content_size = new_content_size;
+    file->size = new_content_size; // For compatibility
+    file->modification_time = time(NULL);
+
+    // Update block usage if needed
+    int blocks_needed = (new_content_size / BLOCK_SIZE) + 1;
+    if (blocks_needed != file->blocks_used) {
+        free_blocks(file->start_block, file->blocks_used);
+        file->start_block = allocate_blocks(blocks_needed);
+        if (file->start_block == -1) {
+            printf(COLOR_RED "Error: Not enough space for file expansion\n" COLOR_RESET);
+            pthread_mutex_unlock(&mutex);
+            return -1;
+        }
+        file->blocks_used = blocks_needed;
+    }
+
+    save_state();
+    printf(COLOR_GREEN "Wrote %d bytes to '%s' (new size: %d bytes)\n" COLOR_RESET,
+           data_len, filename, new_content_size);
+    
+    pthread_mutex_unlock(&mutex);
+    return data_len;
+}
+
+char *read_from_file(const char *filename, int bytes_to_read) {
+    pthread_mutex_lock(&mutex);
+    
+    File *file = NULL;
+    // Find the file
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
+            file = &fs_state.directories[fs_state.current_directory].files[i];
+            break;
+        }
+    }
+
+    if (!file) {
+        printf(COLOR_RED "Error: File '%s' not found\n" COLOR_RESET, filename);
+        pthread_mutex_unlock(&mutex);
+        return NULL;
+    }
+
+    // Check read permissions
+    if ((file->permissions & 0444) == 0) {
+        printf(COLOR_RED "Error: No read permissions for file '%s'\n" COLOR_RESET, filename);
+        pthread_mutex_unlock(&mutex);
+        return NULL;
+    }
+
+    // Handle EOF
+    if (file->file_position >= file->content_size) {
+        pthread_mutex_unlock(&mutex);
+        return strdup(""); // Return empty string at EOF
+    }
+
+    // Calculate how many bytes we can actually read
+    int remaining_bytes = file->content_size - file->file_position;
+    int read_bytes = (bytes_to_read <= 0) ? remaining_bytes : 
+                    (bytes_to_read < remaining_bytes) ? bytes_to_read : remaining_bytes;
+
+    // Allocate buffer and copy data
+    char *buffer = malloc(read_bytes + 1);
+    if (!buffer) {
+        printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
+        pthread_mutex_unlock(&mutex);
+        return NULL;
+    }
+
+    memcpy(buffer, file->content + file->file_position, read_bytes);
+    buffer[read_bytes] = '\0'; // Null-terminate
+    
+    // Update position
+    file->file_position += read_bytes;
+    file->modification_time = time(NULL);
+    
+    pthread_mutex_unlock(&mutex);
+    return buffer;
 }
 
 void change_permissions(char *filename, int mode)
@@ -401,6 +843,59 @@ void print_file_info(const char *filename)
 void change_directory(char *dirname)
 {
     pthread_mutex_lock(&mutex);
+
+    // Handle absolute paths (starting with '/')
+    if (dirname[0] == '/')
+    {
+        int target_dir = 0; // Start at root
+        char *token = strtok(dirname + 1, "/");
+
+        while (token != NULL)
+        {
+            int found = -1;
+
+            // Special case for parent directory
+            if (strcmp(token, "..") == 0)
+            {
+                if (fs_state.directories[target_dir].parent_directory != -1)
+                {
+                    target_dir = fs_state.directories[target_dir].parent_directory;
+                }
+                token = strtok(NULL, "/");
+                continue;
+            }
+
+            // Look for matching directory
+            for (int i = 0; i < MAX_DIRECTORIES; i++)
+            {
+                if (strcmp(fs_state.directories[i].dirname, token) == 0 &&
+                    fs_state.directories[i].parent_directory == target_dir)
+                {
+                    found = i;
+                    break;
+                }
+            }
+
+            if (found == -1)
+            {
+                printf(COLOR_RED "Error: Directory '%s' not found in '%s'\n" COLOR_RESET,
+                       token, fs_state.directories[target_dir].dirname);
+                pthread_mutex_unlock(&mutex);
+                return;
+            }
+
+            target_dir = found;
+            token = strtok(NULL, "/");
+        }
+
+        fs_state.current_directory = target_dir;
+        printf(COLOR_GREEN "Changed directory to '%s'\n" COLOR_RESET,
+               get_current_working_directory());
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    // Handle relative paths (original implementation)
     int found = -1;
 
     if (strcmp(dirname, "..") == 0)
@@ -427,7 +922,7 @@ void change_directory(char *dirname)
     {
         fs_state.current_directory = found;
         printf(COLOR_GREEN "Changed directory to '%s'\n" COLOR_RESET,
-               fs_state.directories[fs_state.current_directory].dirname);
+               get_current_working_directory());
     }
     else
     {
@@ -707,23 +1202,51 @@ void create_symbolic_link(const char *source, const char *link)
     pthread_mutex_unlock(&mutex);
 }
 
-void help()
-{
+void help() {
     printf("\nAvailable commands:\n");
     printf("-------------------\n");
-    printf("create <filename> <size> <permissions> - Create a new file (permissions in octal, e.g., 644)\n");
-    printf("create -d <dirname>                    - Create a new directory\n");
-    printf("delete <filename>                      - Delete a file\n");
-    printf("copy <file> <directory>                - Copy a file to another directory\n");
-    printf("move <file> <directory>                - Move a file to another directory\n");
-    printf("ln -s <source> <link>                  - Create symbolic link\n");
-    printf("ln <source> <link>                     - Create hard link\n");
-    printf("chmod <mode> <file>                    - Change file permissions\n");
-    printf("stat <file>                            - Show file information\n");
-    printf("list                                   - List directory contents\n");
-    printf("cd <dirname>                           - Change directory\n");
-    printf("help                                   - Show this help message\n");
-    printf("quit                                   - Exit the terminal\n\n");
+    
+    // File operations
+    printf("File Operations:\n");
+    printf("  create <filename> <size> <permissions> - Create new file (permissions in octal)\n");
+    printf("  delete <filename>                      - Delete a file\n");
+    printf("  delete -d <dirname>                   - Delete an empty directory\n");
+    printf("  write [-a] <file> <data>              - Write data to file (-a for append)\n");
+    printf("  read <file> [bytes]                   - Read content from file (optional byte count)\n");
+    printf("  seek <file> <offset> <SET|CUR|END>    - Move read position in file\n");
+    printf("  chmod <mode> <file>                   - Change file permissions\n");
+    printf("  stat <file>                           - Show file information\n");
+    
+    // Directory operations
+    printf("\nDirectory Operations:\n");
+    printf("  create -d <dirname>                   - Create new directory\n");
+    printf("  list                                  - List directory contents\n");
+    printf("  cd <dirname>                          - Change directory\n");
+    printf("  pwd                                   - Print current directory path\n");
+    printf("  copy <file> <directory>               - Copy file to another directory\n");
+    printf("  move <file> <directory>               - Move file to another directory\n");
+    
+    // Link operations
+    printf("\nLink Operations:\n");
+    printf("  ln <source> <link>                    - Create hard link\n");
+    printf("  ln -s <source> <link>                 - Create symbolic link\n");
+    
+    // System operations
+    printf("\nSystem Operations:\n");
+    printf("  help                                  - Show this help message\n");
+    printf("  quit                                  - Exit the terminal\n");
+    
+    printf("\nSeek Position Examples:\n");
+    printf("  seek file.txt 10 SET    - Move to position 10 from start\n");
+    printf("  seek file.txt 5 CUR     - Move 5 bytes forward\n");
+    printf("  seek file.txt -3 END    - Move 3 bytes before end\n");
+    
+    printf("\nPermission Examples:\n");
+    printf("  644 - Owner: read/write, Others: read\n");
+    printf("  755 - Owner: all, Others: read/execute\n");
+    printf("  600 - Owner: read/write, Others: none\n");
+    
+    printf("\n");
 }
 
 void execute_job(Job job)
@@ -764,6 +1287,48 @@ void execute_job(Job job)
     {
         list_files();
     }
+    else if (strcmp(command, "pwd") == 0)
+    {
+        printf("%s\n", get_current_working_directory());
+    }
+    else if (strncmp(command, "seek", 4) == 0) {
+        char filename[MAX_FILENAME];
+        int offset;
+        char whence_str[10];
+        
+        if (sscanf(command, "seek %s %d %s", filename, &offset, whence_str) == 3) {
+            int whence;
+            if (strcmp(whence_str, "SET") == 0) whence = SEEK_SET;
+            else if (strcmp(whence_str, "CUR") == 0) whence = SEEK_CUR;
+            else if (strcmp(whence_str, "END") == 0) whence = SEEK_END;
+            else {
+                printf("Invalid whence. Use SET, CUR or END\n");
+                return;
+            }
+            
+            // Find the file
+            File *file = NULL;
+            for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+                if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
+                    file = &fs_state.directories[fs_state.current_directory].files[i];
+                    break;
+                }
+            }
+            
+            if (file) {
+                int new_pos = file_seek(file, offset, whence);
+                if (new_pos != -1) {
+                    printf("Position set to %d in file '%s'\n", new_pos, filename);
+                } else {
+                    printf("Invalid seek position\n");
+                }
+            } else {
+                printf("File not found\n");
+            }
+        } else {
+            printf("Usage: seek <filename> <offset> <SET|CUR|END>\n");
+        }
+    }
     else if (strncmp(command, "cd", 2) == 0)
     {
         char dirname[MAX_FILENAME];
@@ -780,16 +1345,100 @@ void execute_job(Job job)
     {
         help();
     }
-    else if (strncmp(command, "delete", 6) == 0)
+    else if (strncmp(command, "write", 5) == 0)
     {
-        char filename[MAX_FILENAME];
-        if (sscanf(command, "delete %s", filename) == 1)
+        char filename[MAX_FILENAME], data[256];
+        int append = 0;
+
+        // Check for append flag
+        if (strstr(command, "-a") != NULL)
         {
-            delete_file(filename);
+            if (sscanf(command, "write -a %s %[^\n]", filename, data) == 2)
+            {
+                append = 1;
+            }
+            else
+            {
+                printf(COLOR_RED "Usage: write [-a] <filename> <data>\n" COLOR_RESET);
+                free(job.command);
+                return;
+            }
         }
         else
         {
-            printf(COLOR_RED "Usage: delete <filename>\n" COLOR_RESET);
+            if (sscanf(command, "write %s %[^\n]", filename, data) != 2)
+            {
+                printf(COLOR_RED "Usage: write [-a] <filename> <data>\n" COLOR_RESET);
+                free(job.command);
+                return;
+            }
+        }
+
+        write_to_file(filename, data, append);
+    }
+    else if (strncmp(command, "read", 4) == 0)
+{
+    char filename[MAX_FILENAME];
+    int bytes_to_read = -1;  // Default: read to end of file
+    
+    // Parse either "read <filename>" or "read <filename> <bytes>"
+    if (sscanf(command, "read %s %d", filename, &bytes_to_read) >= 1)
+    {
+        char *content = read_from_file(filename, bytes_to_read);
+        if (content)
+        {
+            printf("File content [%d bytes]: %s\n", (int)strlen(content), content);
+            free(content);
+            
+            // Show current position after read
+            pthread_mutex_lock(&mutex);
+            for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
+            {
+                if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
+                {
+                    printf("Current position: %d/%d\n", 
+                           fs_state.directories[fs_state.current_directory].files[i].file_position,
+                           fs_state.directories[fs_state.current_directory].files[i].content_size);
+                    break;
+                }
+            }
+            pthread_mutex_unlock(&mutex);
+        }
+    }
+    else
+    {
+        printf(COLOR_RED "Usage: read <filename> [bytes]\n" COLOR_RESET);
+        printf(COLOR_RED "Examples:\n" COLOR_RESET);
+        printf(COLOR_RED "  read file.txt       - Read entire file\n" COLOR_RESET);
+        printf(COLOR_RED "  read file.txt 10    - Read next 10 bytes\n" COLOR_RESET);
+        printf(COLOR_RED "  Use 'seek' command to change position first\n" COLOR_RESET);
+    }
+}
+    else if (strncmp(command, "delete", 6) == 0)
+    {
+        if (strstr(command, "-d") != NULL)
+        {
+            char dirname[MAX_FILENAME];
+            if (sscanf(command, "delete -d %s", dirname) == 1)
+            {
+                delete_directory(dirname);
+            }
+            else
+            {
+                printf(COLOR_RED "Usage: delete -d <dirname>\n" COLOR_RESET);
+            }
+        }
+        else
+        {
+            char filename[MAX_FILENAME];
+            if (sscanf(command, "delete %s", filename) == 1)
+            {
+                delete_file(filename);
+            }
+            else
+            {
+                printf(COLOR_RED "Usage: delete <filename> OR delete -d <dirname>\n" COLOR_RESET);
+            }
         }
     }
     else if (strncmp(command, "copy", 4) == 0)
@@ -1033,16 +1682,19 @@ int main()
                fs_state.directories[fs_state.current_directory].dirname);
         fflush(stdout);
 
-        if (!fgets(input, sizeof(input), stdin)) {
+        if (!fgets(input, sizeof(input), stdin))
+        {
             break;
         }
 
         input[strcspn(input, "\n")] = 0;
 
-        if (strcmp(input, "quit") == 0) {
+        if (strcmp(input, "quit") == 0)
+        {
             handle_signal(SIGINT);
         }
-        else if (strchr(input, '|') != NULL) {
+        else if (strchr(input, '|') != NULL)
+        {
             // Handle piped commands
             char *token = strtok(input, "|");
             while (token != NULL)
