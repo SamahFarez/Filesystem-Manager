@@ -117,106 +117,119 @@ void initialize_directories()
     }
 }
 
-void save_state()
-{
+void save_state() {
     FILE *fp = fopen(STORAGE_FILE, "wb");
-    if (fp)
-    {
-        // Save main structure without content pointers
-        size_t base_size = sizeof(fs_state) - sizeof(File) * MAX_DIRECTORIES * MAX_FILES;
-        fwrite(&fs_state, base_size, 1, fp);
-
-        // Save directory structures without file content
-        for (int i = 0; i < MAX_DIRECTORIES; i++)
-        {
-            size_t dir_size = sizeof(Directory) - sizeof(File) * MAX_FILES;
-            fwrite(&fs_state.directories[i], dir_size, 1, fp);
-
-            // Save file metadata and content
-            for (int j = 0; j < fs_state.directories[i].file_count; j++)
-            {
+    if (fp) {
+        // Save main structure without dynamic content
+        FileSystemState temp_state = fs_state;
+        for (int i = 0; i < MAX_DIRECTORIES; i++) {
+            for (int j = 0; j < temp_state.directories[i].file_count; j++) {
+                temp_state.directories[i].files[j].content = NULL;
+                temp_state.directories[i].files[j].page_table = NULL;
+            }
+        }
+        fwrite(&temp_state, sizeof(temp_state), 1, fp);
+        
+        // Save page bitmap
+        fwrite(page_bitmap, sizeof(page_bitmap), 1, fp);
+        
+        // Save file contents and page tables
+        for (int i = 0; i < MAX_DIRECTORIES; i++) {
+            for (int j = 0; j < fs_state.directories[i].file_count; j++) {
                 File *file = &fs_state.directories[i].files[j];
-                size_t file_meta_size = sizeof(File) - sizeof(char *);
-                fwrite(file, file_meta_size, 1, fp);
-
-                // Save content with size prefix
-                if (file->content && file->content_size > 0)
-                {
+                
+                // Save content size and content
+                fwrite(&file->content_size, sizeof(size_t), 1, fp);
+                if (file->content && file->content_size > 0) {
                     fwrite(file->content, 1, file->content_size, fp);
+                }
+                
+                // Save page table
+                fwrite(&file->page_table_size, sizeof(int), 1, fp);
+                if (file->page_table && file->page_table_size > 0) {
+                    fwrite(file->page_table, sizeof(PageTableEntry), file->page_table_size, fp);
                 }
             }
         }
-
-
         fclose(fp);
     }
 }
 
-void load_state()
-{
+
+void load_state() {
     printf("Attempting to load state...\n");
     FILE *fp = fopen(STORAGE_FILE, "rb");
-    if (fp)
-    {
+    if (fp) {
+        // Load main structure
         printf("Found existing filesystem.dat\n");
-        // Load base structure
-        size_t base_size = sizeof(fs_state) - sizeof(File) * MAX_DIRECTORIES * MAX_FILES;
-        if (fread(&fs_state, base_size, 1, fp) != 1)
-        {
-            printf("Error reading base structure, initializing new one\n");
+        if (fread(&fs_state, sizeof(fs_state), 1, fp) != 1) {
+            printf("Error reading filesystem state, initializing new one\n");
             fclose(fp);
             initialize_directories();
             return;
         }
-
-        // Load directories
-        for (int i = 0; i < MAX_DIRECTORIES; i++)
-        {
-            size_t dir_size = sizeof(Directory) - sizeof(File) * MAX_FILES;
-            if (fread(&fs_state.directories[i], dir_size, 1, fp) != 1)
-            {
-                printf("Error reading directory %d, initializing new one\n", i);
-                fclose(fp);
-                initialize_directories();
-                return;
-            }
-
-            // Load files
-            for (int j = 0; j < fs_state.directories[i].file_count; j++)
-            {
+        
+        // Load page bitmap
+        if (fread(page_bitmap, sizeof(page_bitmap), 1, fp) != 1) {
+            fclose(fp);
+            initialize_directories();
+            return;
+        }
+        
+        // Load file contents and page tables
+        for (int i = 0; i < MAX_DIRECTORIES; i++) {
+            for (int j = 0; j < fs_state.directories[i].file_count; j++) {
                 File *file = &fs_state.directories[i].files[j];
-                size_t file_meta_size = sizeof(File) - sizeof(char *);
-                if (fread(file, file_meta_size, 1, fp) != 1)
-                {
-                    printf("Error reading file %d in directory %d\n", j, i);
-                    break;
-                }
-
+                
                 // Load content
-                if (file->content_size > 0)
-                {
+                if (fread(&file->content_size, sizeof(size_t), 1, fp) != 1) {
+                    file->content = NULL;
+                    file->content_size = 0;
+                    continue;
+                }
+                
+                if (file->content_size > 0) {
                     file->content = malloc(file->content_size);
-                    if (fread(file->content, 1, file->content_size, fp) != file->content_size)
-                    {
-                        printf("Error reading file content\n");
+                    if (!file->content) {
+                        printf("Error allocating memory for file content\n");
+                        file->content_size = 0;
+                        continue;
+                    }
+                    if (fread(file->content, 1, file->content_size, fp) != file->content_size) {
                         free(file->content);
                         file->content = NULL;
+                        file->content_size = 0;
                     }
                 }
-                else
-                {
-                    file->content = NULL;
+                
+                // Load page table
+                if (fread(&file->page_table_size, sizeof(int), 1, fp) != 1) {
+                    file->page_table = NULL;
+                    file->page_table_size = 0;
+                    continue;
+                }
+                
+                if (file->page_table_size > 0) {
+                    file->page_table = malloc(file->page_table_size * sizeof(PageTableEntry));
+                    if (!file->page_table) {
+                        file->page_table_size = 0;
+                        continue;
+                    }
+                    if (fread(file->page_table, sizeof(PageTableEntry), file->page_table_size, fp) != file->page_table_size) {
+                        free(file->page_table);
+                        file->page_table = NULL;
+                        file->page_table_size = 0;
+                    }
                 }
             }
         }
         fclose(fp);
-    }
-    else
-    {
+    } else {
         printf("No existing filesystem found, initializing new one\n");
         initialize_directories();
     }
 }
+
 
 
 
@@ -761,8 +774,7 @@ int write_to_file(const char *filename, const char *data, int append)
     }
 
     // Update file content
-    if (file->content)
-        ;
+    if (file->content){};
     file->content = new_content;
     file->content_size = new_content_size;
     file->size = new_content_size;
@@ -774,46 +786,62 @@ int write_to_file(const char *filename, const char *data, int append)
 }
 
 
-char *read_from_file(const char *filename, int bytes_to_read, int offset) {
+char *read_from_file(const char *filename, int bytes_to_read, int offset)
+{
     pthread_mutex_lock(&mutex);
-    
+
     File *file = NULL;
     // Find the file
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0) {
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
+    {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, filename) == 0)
+        {
             file = &fs_state.directories[fs_state.current_directory].files[i];
             break;
         }
     }
 
-    if (!file) {
+    if (!file)
+    {
         printf("Error: File not found\n");
         pthread_mutex_unlock(&mutex);
         return NULL;
     }
 
     // Check read permissions
-    if ((file->permissions & 0444) == 0) {  // Check if any read bits are set
+    if ((file->permissions & 0444) == 0)
+    { // Check if any read bits are set
         printf(COLOR_RED "Error: Permission denied (no read permission)\n" COLOR_RESET);
         pthread_mutex_unlock(&mutex);
         return NULL;
     }
 
+     // Check if file has content
+     if (!file->content || file->content_size <= 0) {
+        printf("File is empty\n");
+        pthread_mutex_unlock(&mutex);
+        return strdup(""); // Return empty string
+    }
+
     // Validate offset
-    if (offset < 0) {
+    if (offset < 0)
+    {
         offset = 0;
-    } else if (offset > file->content_size) {
+    }
+    else if (offset > file->content_size)
+    {
         offset = file->content_size;
     }
 
     // Calculate how many bytes we can actually read
     int remaining_bytes = file->content_size - offset;
-    int read_bytes = (bytes_to_read <= 0) ? remaining_bytes : 
-                    (bytes_to_read < remaining_bytes) ? bytes_to_read : remaining_bytes;
+    int read_bytes = (bytes_to_read <= 0) ? remaining_bytes : (bytes_to_read < remaining_bytes) ? bytes_to_read
+                                                                                                : remaining_bytes;
 
     // Allocate buffer
     char *buffer = malloc(read_bytes + 1);
-    if (!buffer) {
+    if (!buffer)
+    {
         printf("Error: Memory allocation failed\n");
         pthread_mutex_unlock(&mutex);
         return NULL;
@@ -822,13 +850,14 @@ char *read_from_file(const char *filename, int bytes_to_read, int offset) {
     // Copy data from specified offset
     memcpy(buffer, file->content + offset, read_bytes);
     buffer[read_bytes] = '\0';
-    
+
     // Update modification time
     file->modification_time = time(NULL);
 
     pthread_mutex_unlock(&mutex);
     return buffer;
 }
+
 
 void change_permissions(char *filename, int mode) {
     pthread_mutex_lock(&mutex);
@@ -1120,54 +1149,40 @@ void move_file_to_dir(const char *filename, const char *dirname)
     pthread_mutex_unlock(&mutex);
 }
 
-void create_hard_link(const char *source, const char *link)
-{
+void create_hard_link(const char *source, const char *link) {
     pthread_mutex_lock(&mutex);
-
-    // Find source file
+    
+    // 1. Find source file
     File *src_file = NULL;
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, source) == 0)
-        {
+    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++) {
+        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, source) == 0) {
             src_file = &fs_state.directories[fs_state.current_directory].files[i];
             break;
         }
     }
 
-    if (!src_file)
-    {
-        printf(COLOR_RED "Error: Source file '%s' not found\n" COLOR_RESET, source);
+    if (!src_file) {
+        printf("Error: Source file '%s' not found\n", source);
         pthread_mutex_unlock(&mutex);
         return;
     }
 
-    // Check if link name already exists
-    for (int i = 0; i < fs_state.directories[fs_state.current_directory].file_count; i++)
-    {
-        if (strcmp(fs_state.directories[fs_state.current_directory].files[i].filename, link) == 0)
-        {
-            printf(COLOR_RED "Error: Link name '%s' already exists\n" COLOR_RESET, link);
-            pthread_mutex_unlock(&mutex);
-            return;
-        }
-    }
+    // 2. Create new link (SHARE the same content pointer)
+    File new_link;
+    memcpy(&new_link, src_file, sizeof(File)); // Copy all metadata
+    strcpy(new_link.filename, link); // Only change the filename
+    new_link.creation_time = time(NULL); // Update timestamp
 
-    if (fs_state.directories[fs_state.current_directory].file_count >= MAX_FILES)
-    {
-        printf(COLOR_RED "Error: Directory full\n" COLOR_RESET);
+    // 3. Add to directory (now both files point to the SAME content)
+    if (fs_state.directories[fs_state.current_directory].file_count >= MAX_FILES) {
+        printf("Error: Directory full\n");
         pthread_mutex_unlock(&mutex);
         return;
     }
-
-    File new_link = *src_file;
-    strcpy(new_link.filename, link);
-    new_link.creation_time = time(NULL);
 
     fs_state.directories[fs_state.current_directory].files[fs_state.directories[fs_state.current_directory].file_count++] = new_link;
 
-    save_state();
-    printf(COLOR_GREEN "Created hard link '%s' -> '%s'\n" COLOR_RESET, link, source);
+    printf("Created hard link '%s' -> '%s'\n", link, source);
     pthread_mutex_unlock(&mutex);
 }
 
@@ -1227,5 +1242,172 @@ void create_symbolic_link(const char *source, const char *link)
     save_state();
     printf(COLOR_GREEN "Created symbolic link '%s' -> '%s'\n" COLOR_RESET, link, source);
     pthread_mutex_unlock(&mutex);
+}
+
+void format_filesystem()
+{
+    pthread_mutex_lock(&mutex);
+    printf(COLOR_RED "WARNING: This will erase ALL data! Continue? [y/N] " COLOR_RESET);
+    char response[10];
+    fgets(response, sizeof(response), stdin);
+
+    if (tolower(response[0]) == 'y')
+    {
+        // Wipe the storage file
+        FILE *fp = fopen(STORAGE_FILE, "wb");
+        if (fp)
+            fclose(fp);
+
+        // Reinitialize everything
+        initialize_directories();
+        initialize_paging();
+        printf(COLOR_GREEN "File system formatted successfully\n" COLOR_RESET);
+    }
+    else
+    {
+        printf("Format cancelled\n");
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+void backup_filesystem(const char *backup_name)
+{
+    pthread_mutex_lock(&mutex);
+    char backup_file[256];
+    snprintf(backup_file, sizeof(backup_file), "%s.bak", backup_name);
+
+    FILE *src = fopen(STORAGE_FILE, "rb");
+    FILE *dst = fopen(backup_file, "wb");
+
+    if (!src || !dst)
+    {
+        printf("Error creating backup\n");
+        if (src)
+            fclose(src);
+        if (dst)
+            fclose(dst);
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    char buffer[4096];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)))
+    {
+        fwrite(buffer, 1, bytes, dst);
+    }
+
+    fclose(src);
+    fclose(dst);
+    printf("Backup created: %s\n", backup_file);
+    pthread_mutex_unlock(&mutex);
+}
+
+void restore_filesystem(const char *backup_name)
+{
+    pthread_mutex_lock(&mutex);
+    char backup_file[256];
+    snprintf(backup_file, sizeof(backup_file), "%s.bak", backup_name);
+
+    printf(COLOR_RED "WARNING: This will overwrite current filesystem! Continue? [y/N] " COLOR_RESET);
+    char response[10];
+    fgets(response, sizeof(response), stdin);
+
+    if (tolower(response[0]) != 'y')
+    {
+        printf("Restore cancelled\n");
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    FILE *src = fopen(backup_file, "rb");
+    FILE *dst = fopen(STORAGE_FILE, "wb");
+
+    if (!src || !dst)
+    {
+        printf("Error restoring backup\n");
+        if (src)
+            fclose(src);
+        if (dst)
+            fclose(dst);
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+
+    char buffer[4096];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)))
+    {
+        fwrite(buffer, 1, bytes, dst);
+    }
+
+    fclose(src);
+    fclose(dst);
+
+    // Reload the restored state
+    load_state();
+    printf("Filesystem restored from: %s\n", backup_file);
+    pthread_mutex_unlock(&mutex);
+}
+
+void show_directory_info(const char *dirname) {
+    pthread_mutex_lock(&mutex);
+    
+    // First gather all needed information while holding the lock
+    int target_dir = fs_state.current_directory;
+    char dirname_copy[MAX_FILENAME] = {0};
+    char path[1024] = {0};
+    
+    if (dirname == NULL || strcmp(dirname, ".") == 0) {
+        // Use current directory
+        strncpy(dirname_copy, fs_state.directories[target_dir].dirname, MAX_FILENAME-1);
+    } else {
+        // Find the target directory
+        int found = 0;
+        for (int i = 0; i < MAX_DIRECTORIES; i++) {
+            if (strcmp(fs_state.directories[i].dirname, dirname) == 0 &&
+                fs_state.directories[i].parent_directory == fs_state.current_directory) {
+                target_dir = i;
+                strncpy(dirname_copy, dirname, MAX_FILENAME-1);
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            pthread_mutex_unlock(&mutex);
+            printf("Directory not found\n");
+            return;
+        }
+    }
+    
+    // Build path without calling pwd (to avoid deadlock)
+    int current = target_dir;
+    char *ptr = path + sizeof(path) - 1;
+    *ptr = '\0';
+    
+    while (current != -1) {
+        const char *name = fs_state.directories[current].dirname;
+        size_t len = strlen(name);
+        
+        ptr -= len;
+        memcpy(ptr, name, len);
+        
+        if (fs_state.directories[current].parent_directory != -1) {
+            *--ptr = '/';
+        }
+        
+        current = fs_state.directories[current].parent_directory;
+    }
+    
+    Directory *dir = &fs_state.directories[target_dir];
+    
+    // Now we can release the lock before printing
+    pthread_mutex_unlock(&mutex);
+    
+    // Print the information
+    printf("\nDirectory: %s\n", dirname_copy);
+    printf("Path: %s\n", ptr);
+    printf("Files: %d\n", dir->file_count);
+    printf("Created: %s", ctime(&dir->creation_time));
 }
 

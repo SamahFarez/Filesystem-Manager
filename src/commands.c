@@ -16,27 +16,33 @@ void help()
     printf("  seek <file> <offset> <SET|CUR|END>      - Move read position in file\n");
     printf("  chmod <permissions> <file               - Change file permissions\n");
     printf("  stat <file>                             - Show file information\n");
-    
-    
+
+
     // Directory operations
     printf("\nDirectory Operations:\n");
-    printf("  create -d <dirname>                   - Create new directory\n");
-    printf("  cd <dirname>                          - Change directory (default: /home)\n");
-    printf("  list                                  - List directory contents\n");
-    printf("  pwd                                   - Print current directory path\n");
-    printf("  copy <file> <directory>               - Copy file to another directory\n");
-    printf("  move <file> <directory>               - Move file to another directory\n");
-
+    printf("  create -d <dirname>                     - Create new directory\n");
+    printf("  cd <dirname>                            - Change directory (default: /home)\n");
+    printf("  list                                    - List directory contents\n");
+    printf("  pwd                                     - Print current directory path\n");
+    printf("  copy <file> <directory>                 - Copy file to another directory\n");
+    printf("  move <file> <directory>                 - Move file to another directory\n");
+    printf("  dirinfo [dirname]                       - Show directory information (default: current dir)\n");
     // Link operations
     printf("\nLink Operations:\n");
-    printf("  ln <source> <link>                    - Create hard link\n");
-    printf("  ln -s <source> <link>                 - Create symbolic link\n");
+    printf("  ln <source> <link>                      - Create hard link\n");
+    printf("  ln -s <source> <link>                   - Create symbolic link\n");
 
     // System operations
     printf("\nSystem Operations:\n");
-    printf("  showages                              - Show paging bitmap\n");
-    printf("  help                                  - Show this help message\n");
-    printf("  quit                                  - Exit the terminal\n");
+    printf("  format                                  - Format the filesystem (WARNING: erases all data)\n");
+    printf("  open <file>                             - Open a file\n");
+    printf("  close <file>                            - Close a file\n");
+    printf("  backup [name]                           - Create backup\n");
+    printf("  restore [name]                          - Restore from backup\n");
+    printf("  concurrency_test                        - Run concurrency test\n");
+    printf("  dirinfo [dirname]                       - Show directory information\n");    printf("  showages                              - Show paging bitmap\n");
+    printf("  help                                    - Show this help message\n");
+    printf("  quit                                    - Exit the terminal\n");
 
     printf("\n");
 }
@@ -82,6 +88,28 @@ void execute_job(Job job)
     else if (strcmp(command, "pwd") == 0)
     {
         printf("%s\n", get_current_working_directory());
+    }
+    else if (strncmp(command, "backup", 6) == 0)
+    {
+        char name[256] = "default";
+        sscanf(command, "backup %255s", name);
+        backup_filesystem(name);
+    }
+    else if (strncmp(command, "restore", 7) == 0)
+    {
+        char name[256] = "default";
+        sscanf(command, "restore %255s", name);
+        restore_filesystem(name);
+    }
+    else if (strcmp(command, "format") == 0)
+    {
+        format_filesystem();
+    }
+    else if (strncmp(command, "dirinfo", 7) == 0)
+    {
+        char dirname[MAX_FILENAME] = {0};
+        sscanf(command, "dirinfo %s", dirname);
+        show_directory_info(strlen(dirname) > 0 ? dirname : NULL);
     }
     else if (strncmp(command, "seek", 4) == 0)
     {
@@ -185,19 +213,48 @@ void execute_job(Job job)
 
         write_to_file(filename, data, append);
     }
-    else if (strncmp(command, "read", 4) == 0) {
+    else if (strncmp(command, "open", 4) == 0)
+    {
+        char filename[MAX_FILENAME];
+        if (sscanf(command, "open %s", filename) == 1)
+        {
+            open_file(filename);
+        }
+        else
+        {
+            printf("Usage: open <filename>\n");
+        }
+    }
+    else if (strncmp(command, "close", 5) == 0)
+    {
+        char filename[MAX_FILENAME];
+        if (sscanf(command, "close %s", filename) == 1)
+        {
+            close_file(filename);
+        }
+        else
+        {
+            printf("Usage: close <filename>\n");
+        }
+    }
+    else if (strncmp(command, "read", 4) == 0)
+    {
         char filename[MAX_FILENAME];
         int bytes_to_read = -1; // Default: read to end of file
         int offset = 0;         // Default: read from beginning
-    
+
         // Parse either "read <filename>", "read <filename> <bytes>", or "read <filename> <offset> <bytes>"
-        if (sscanf(command, "read %s %d %d", filename, &offset, &bytes_to_read) >= 1) {
+        if (sscanf(command, "read %s %d %d", filename, &offset, &bytes_to_read) >= 1)
+        {
             char *content = read_from_file(filename, bytes_to_read, offset);
-            if (content) {
+            if (content)
+            {
                 printf("File content [%d bytes]: %s\n", (int)strlen(content), content);
                 free(content);
             }
-        } else {
+        }
+        else
+        {
             printf(COLOR_RED "Usage: read <filename> [offset] [bytes]\n" COLOR_RESET);
             printf(COLOR_RED "Examples:\n" COLOR_RESET);
             printf(COLOR_RED "  read file.txt         - Read entire file\n" COLOR_RESET);
