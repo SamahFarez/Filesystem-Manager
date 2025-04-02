@@ -30,7 +30,7 @@ Lancez le gestionnaire de système de fichiers avec :
 
 ### Commandes disponibles
 
-Une fois dans le shell interactif, vous pouvez utiliser la commande ```help()```
+Une fois dans le shell interactif, vous pouvez utiliser la commande ```help()``` pour afficher un guide systeme
 
 ## Dépannage
 
