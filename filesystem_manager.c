@@ -280,18 +280,18 @@ void initialize_directories()
     memset(page_bitmap, 0, sizeof(page_bitmap));
 
     // Initialize root directory (ID 0)
-    strcpy(fs_state.directories[0].dirname, "/");
+    strcpy(fs_state.directories[0].dirname, "~");
     fs_state.directories[0].file_count = 0;
     fs_state.directories[0].parent_directory = -1; // Root has no parent
     fs_state.directories[0].creation_time = time(NULL);
-    fs_state.directories[0].inode = 1743450750;  // Root always gets inode 1
+    fs_state.directories[0].inode = (ino_t)(time(NULL) + rand() + (long)&fs_state); // More unique inode
 
     // Create a default home directory (ID 1)
     strcpy(fs_state.directories[1].dirname, "home");
     fs_state.directories[1].file_count = 0;
     fs_state.directories[1].parent_directory = 0; // Parent is root
     fs_state.directories[1].creation_time = time(NULL);
-    fs_state.directories[1].inode = 1743450785;  // Home directory gets inode 2
+    fs_state.directories[1].inode = (ino_t)(time(NULL) + rand() + (long)&fs_state); // More unique inode
 
     // Set current directory to root
     fs_state.current_directory = 0;
@@ -338,7 +338,7 @@ void initialize_directories()
         .file_position = 0,
         .page_table = file1_pages,
         .page_table_size = 1,
-        .inode = 1743450767,  // readme.txt gets inode 3
+        .inode = (ino_t)(time(NULL) + rand() + (long)&file1),
         .ref_count = 1,
         .is_symlink = 0,
         .link_target = NULL
@@ -356,7 +356,7 @@ void initialize_directories()
         .file_position = 0,
         .page_table = file2_pages,
         .page_table_size = 1,
-        .inode = 17434757870,  // notes.txt gets inode 4
+        .inode = (ino_t)(time(NULL) + rand() + (long)&file2),
         .ref_count = 1,
         .is_symlink = 0,
         .link_target = NULL
@@ -368,6 +368,82 @@ void initialize_directories()
 
     // Save the initial state
     save_state();
+}
+
+void move_directory(const char *src_path, const char *dest_path, const char *new_name) {
+    pthread_mutex_lock(&mutex);
+    
+    // Split source path
+    char *src_dir_path = NULL, *src_dirname = NULL;
+    split_path(src_path, &src_dir_path, &src_dirname);
+    
+    // Find source directory index
+    int src_parent_idx = find_directory_from_path(src_dir_path);
+    if (src_parent_idx == -1) {
+        printf(COLOR_RED "Error: Source parent directory not found\n" COLOR_RESET);
+        goto cleanup;
+    }
+    
+    // Find the directory to move
+    int src_dir_idx = -1;
+    for (int i = 0; i < MAX_DIRECTORIES; i++) {
+        if (strcmp(fs_state.directories[i].dirname, src_dirname) == 0 && 
+            fs_state.directories[i].parent_directory == src_parent_idx) {
+            src_dir_idx = i;
+            break;
+        }
+    }
+    
+    if (src_dir_idx == -1) {
+        printf(COLOR_RED "Error: Source directory not found\n" COLOR_RESET);
+        goto cleanup;
+    }
+    
+    // Split destination path
+    char *dest_dir_path = NULL, *dest_dirname = NULL;
+    split_path(dest_path, &dest_dir_path, &dest_dirname);
+    
+    // Find destination directory index
+    int dest_dir_idx = find_directory_from_path(dest_dir_path);
+    if (dest_dir_idx == -1) {
+        printf(COLOR_RED "Error: Destination directory not found\n" COLOR_RESET);
+        goto cleanup;
+    }
+    
+    // Check if destination is a subdirectory of source (would create cycle)
+    if (src_dir_idx == dest_dir_idx) {
+        printf(COLOR_RED "Error: Cannot move directory into itself\n" COLOR_RESET);
+        goto cleanup;
+    }
+    
+    // Check if directory already exists in destination
+    const char *final_name = new_name ? new_name : src_dirname;
+    for (int i = 0; i < MAX_DIRECTORIES; i++) {
+        if (i != src_dir_idx && 
+            fs_state.directories[i].parent_directory == dest_dir_idx &&
+            strcmp(fs_state.directories[i].dirname, final_name) == 0) {
+            printf(COLOR_RED "Error: Directory already exists in destination\n" COLOR_RESET);
+            goto cleanup;
+        }
+    }
+    
+    // Update directory metadata
+    fs_state.directories[src_dir_idx].parent_directory = dest_dir_idx;
+    if (new_name) {
+        strncpy(fs_state.directories[src_dir_idx].dirname, new_name, MAX_FILENAME-1);
+        fs_state.directories[src_dir_idx].dirname[MAX_FILENAME-1] = '\0';
+    }
+    
+    save_state();
+    printf(COLOR_GREEN "Moved directory '%s' to '%s/%s'\n" COLOR_RESET, 
+           src_path, fs_state.directories[dest_dir_idx].dirname, final_name);
+
+cleanup:
+    free(src_dir_path);
+    free(src_dirname);
+    free(dest_dir_path);
+    free(dest_dirname);
+    pthread_mutex_unlock(&mutex);
 }
 
 void save_state()
@@ -915,10 +991,6 @@ void delete_file(char *path) {
     char *dir_path = NULL, *filename = NULL;
     int dir_idx = -1;
     
-    // Special handling for symbolic links - we want to delete the link itself
-    File *file = NULL;
-    Directory *dir = NULL;
-    
     // First try to find the file without following symlinks
     split_path(path, &dir_path, &filename);
     dir_idx = find_directory_from_path(dir_path);
@@ -928,12 +1000,15 @@ void delete_file(char *path) {
         goto cleanup;
     }
     
-    dir = &fs_state.directories[dir_idx];
+    Directory *dir = &fs_state.directories[dir_idx];
     
     // Find the file in the directory without resolving symlinks
+    File *file = NULL;
+    int file_idx = -1;
     for (int i = 0; i < dir->file_count; i++) {
         if (strcmp(dir->files[i].filename, filename) == 0) {
             file = &dir->files[i];
+            file_idx = i;
             break;
         }
     }
@@ -944,68 +1019,85 @@ void delete_file(char *path) {
     }
 
     if (file->is_symlink) {
+        // Case 1: Deleting a symbolic link - just remove the link itself
         printf(COLOR_BLUE "Deleting symbolic link (inode: %lu): %s -> %s\n" COLOR_RESET,
                file->inode, path, file->link_target ? file->link_target : "(null)");
         
-        // Only delete the link, not the target
-        if (file->link_target) {
-            free(file->link_target);
-            file->link_target = NULL;
-        }
-        
         // Remove from directory
-        int file_idx = file - dir->files;
         for (int i = file_idx; i < dir->file_count - 1; i++) {
             dir->files[i] = dir->files[i + 1];
         }
         
-        // Clear the last entry and decrement count
         memset(&dir->files[dir->file_count - 1], 0, sizeof(File));
         dir->file_count--;
-
-        save_state();
-        printf(COLOR_GREEN "Successfully deleted symbolic link: %s\n" COLOR_RESET, path);
     } 
     else {
-        // Handle regular file or hard link deletion
+        // Case 2: Deleting a regular file or hard link
         printf(COLOR_BLUE "Deleting %s (inode: %lu): %s\n" COLOR_RESET,
                (file->ref_count > 1) ? "hard link" : "file",
                file->inode, path);
 
+        // Decrement reference count
         if (--file->ref_count <= 0) {
+            // This was the last reference - actually delete the file
+            
+            // First, find and invalidate all symbolic links pointing to this file
+            for (int d = 0; d < MAX_DIRECTORIES; d++) {
+                if (strlen(fs_state.directories[d].dirname) > 0) {
+                    for (int f = 0; f < fs_state.directories[d].file_count; f++) {
+                        File *potential_link = &fs_state.directories[d].files[f];
+                        if (potential_link->is_symlink && potential_link->link_target) {
+                            // Resolve the link target to see if it points to our file
+                            char *link_dir_path = NULL, *link_filename = NULL;
+                            int link_dir_idx = -1;
+                            File *target = resolve_file_path(potential_link->link_target, &link_dir_idx, &link_filename);
+                            
+                            if (target && target->inode == file->inode) {
+                                printf(COLOR_YELLOW "  Invalidating symlink: %s/%s -> %s\n" COLOR_RESET,
+                                       fs_state.directories[d].dirname, 
+                                       potential_link->filename,
+                                       potential_link->link_target);
+                                
+                                free(potential_link->link_target);
+                                potential_link->link_target = NULL;
+                            }
+                            
+                            free(link_dir_path);
+                        }
+                    }
+                }
+            }
+
+            // Now free the file resources
             free_pages(file);
             if (file->content) {
                 free(file->content);
-                file->content = NULL;
             }
             if (file->page_table) {
                 free(file->page_table);
-                file->page_table = NULL;
             }
             if (file->link_target) {
                 free(file->link_target);
-                file->link_target = NULL;
             }
         }
-
+        
         // Remove from directory
-        int file_idx = file - dir->files;
         for (int i = file_idx; i < dir->file_count - 1; i++) {
             dir->files[i] = dir->files[i + 1];
         }
-        
         memset(&dir->files[dir->file_count - 1], 0, sizeof(File));
         dir->file_count--;
-
-        save_state();
-        printf(COLOR_GREEN "Successfully deleted: %s\n" COLOR_RESET, path);
     }
+
+    save_state();
+    printf(COLOR_GREEN "Successfully deleted: %s\n" COLOR_RESET, path);
 
 cleanup:
     free(dir_path);
     free(filename);
     pthread_mutex_unlock(&mutex);
 }
+
 
 
 void delete_directory(const char *dirname)
@@ -1293,36 +1385,6 @@ int write_to_file(const char *path, const char *data, int append) {
     return data_len;
 }
 
-
-char *read_file_content(File *file, int bytes_to_read, int offset)
-{
-    // Helper function that actually reads content (without path resolution)
-    if (!file->content || file->content_size <= 0)
-    {
-        return strdup("");
-    }
-
-    if (offset < 0)
-        offset = 0;
-    if (offset > file->content_size)
-        offset = file->content_size;
-
-    int remaining = file->content_size - offset;
-    int read_bytes = (bytes_to_read <= 0) ? remaining : (bytes_to_read < remaining) ? bytes_to_read
-                                                                                    : remaining;
-
-    char *buffer = malloc(read_bytes + 1);
-    if (!buffer)
-    {
-        printf(COLOR_RED "Error: Memory allocation failed\n" COLOR_RESET);
-        return NULL;
-    }
-
-    memcpy(buffer, file->content + offset, read_bytes);
-    buffer[read_bytes] = '\0';
-    return buffer;
-}
-
 char *read_from_file(const char *path, int bytes_to_read, int offset) {
     pthread_mutex_lock(&mutex);
     
@@ -1347,6 +1409,7 @@ char *read_from_file(const char *path, int bytes_to_read, int offset) {
     // Read the actual content
     char *buffer = NULL;
     if (file->content && file->content_size > 0) {
+        // Handle offset and length calculations
         if (offset < 0) offset = 0;
         if (offset > file->content_size) offset = file->content_size;
         
@@ -1371,6 +1434,7 @@ char *read_from_file(const char *path, int bytes_to_read, int offset) {
     pthread_mutex_unlock(&mutex);
     return buffer;
 }
+
 
 void change_directory(char *path)
 {
@@ -1632,7 +1696,6 @@ void copy_file_to_dir(const char *src_path, const char *dest_dir_path) {
 
 cleanup:
     free(src_dir_path);
-    free(src_filename);
     pthread_mutex_unlock(&mutex);
 }
 
@@ -1703,6 +1766,7 @@ cleanup:
     free(src_filename);
     pthread_mutex_unlock(&mutex);
 }
+
 
 void print_file_info(const char *path) {
     pthread_mutex_lock(&mutex);
@@ -1779,7 +1843,6 @@ cleanup:
     free(filename);
     pthread_mutex_unlock(&mutex);
 }
-
 
 void create_hard_link(const char *source_path, const char *link_path)
 {
@@ -1990,6 +2053,65 @@ cleanup:
     free(link_file);
     pthread_mutex_unlock(&mutex);
 }
+
+// Add this new function implementation
+// void defragment_filesystem()
+// {
+//     printf("Running defragmentation...\n");
+
+//     // Create a list of all allocated pages across all files
+//     int total_pages_used = 0;
+//     for (int d = 0; d < MAX_DIRECTORIES; d++)
+//     {
+//         if (strlen(fs_state.directories[d].dirname))
+//         {
+//             for (int f = 0; f < fs_state.directories[d].file_count; f++)
+//             {
+//                 File *file = &fs_state.directories[d].files[f];
+//                 total_pages_used += file->page_table_size;
+//             }
+//         }
+//     }
+
+//     // If we're using less than 90% of pages, no need to defragment
+//     if (total_pages_used < (TOTAL_PAGES * 0.9))
+//     {
+//         printf("Defragmentation not needed (fragmentation level is low)\n");
+//         return;
+//     }
+
+//     // Compact pages by moving files to lower-numbered pages
+//     int next_free_page = 0;
+//     for (int d = 0; d < MAX_DIRECTORIES; d++)
+//     {
+//         if (strlen(fs_state.directories[d].dirname))
+//         {
+//             for (int f = 0; f < fs_state.directories[d].file_count; f++)
+//             {
+//                 File *file = &fs_state.directories[d].files[f];
+
+//                 for (int p = 0; p < file->page_table_size; p++)
+//                 {
+//                     int old_page = file->page_table[p].physical_page;
+
+//                     if (old_page > next_free_page)
+//                     {
+//                         // Move this page to the next free spot
+//                         file->page_table[p].physical_page = next_free_page;
+
+//                         // Update bitmap
+//                         page_bitmap[old_page / 8] &= ~(1 << (old_page % 8));
+//                         page_bitmap[next_free_page / 8] |= (1 << (next_free_page % 8));
+//                     }
+
+//                     next_free_page++;
+//                 }
+//             }
+//         }
+//     }
+
+//     printf("Defragmentation completed. %d pages compacted.\n", total_pages_used);
+// }
 
 void format_filesystem()
 {
@@ -2274,13 +2396,14 @@ void help() {
     printf(COLOR_YELLOW "File Operations:" COLOR_RESET "\n");
     printf("  create <file> <perms>    - Create file with octal permissions (e.g., 644)\n");
     printf("  delete <file>            - Delete a file\n");
+    printf("  move <src> <dest> [newname] - Move file (optionally rename)\n");
     printf("  read <file> [off] [len]  - Read file (optional offset and length)\n");
     printf("  write [-a] <file> <data> - Write to file (-a to append)\n");
     printf("  stat <file>              - Show file metadata\n");
     printf("  chmod <mode> <file>      - Change permissions (e.g., 755)\n");
     printf("  open/close <file>        - Open/close file handles\n");
     printf("  seek <file> <off> <whence> - Move file pointer (SET/CUR/END)\n\n");
-    
+        
     printf(COLOR_YELLOW "Directory Operations:" COLOR_RESET "\n");
     printf("  create -d <dir>          - Create directory\n");
     printf("  delete -d <dir>          - Delete empty directory\n");
@@ -2288,7 +2411,7 @@ void help() {
     printf("  list                     - List directory contents\n");
     printf("  pwd                      - Print working directory\n");
     printf("  copy <src> <dest>        - Copy file\n");
-    printf("  move <src> <dest>        - Move file\n");
+    printf("  move -d <src> <dest> [newname] - Move directory (optionally rename)\n\n");
     printf("  dirinfo [dir]            - Show directory info\n");
     printf("  tree [-i]                - Directory tree (-i shows inodes)\n\n");
     
@@ -2582,6 +2705,49 @@ void execute_job(Job job)
             printf(COLOR_RED "Usage: move <filename> <directory>\n" COLOR_RESET);
         }
     }
+    else if (strncmp(command, "move", 4) == 0)
+{
+    if (strstr(command, "-d") != NULL) {
+        // Handle directory move
+        char src_path[MAX_FILENAME], dest_path[MAX_FILENAME], new_name[MAX_FILENAME] = {0};
+        if (sscanf(command, "move -d %s %s %s", src_path, dest_path, new_name) >= 2) {
+            move_directory(src_path, dest_path, (new_name[0] ? new_name : NULL));
+        } else {
+            printf(COLOR_RED "Usage: move -d <src_dir> <dest_dir> [new_name]\n" COLOR_RESET);
+        }
+    } else {
+        // Handle file move with optional rename
+        char src_path[MAX_FILENAME], dest_path[MAX_FILENAME], new_name[MAX_FILENAME] = {0};
+        if (sscanf(command, "move %s %s %s", src_path, dest_path, new_name) >= 2) {
+            if (new_name[0]) {
+                // Move and rename file
+                char *dir_path = NULL, *filename = NULL;
+                split_path(dest_path, &dir_path, &filename);
+                
+                // First copy to new location with new name
+                char *content = read_from_file(src_path, -1, 0);
+                if (content) {
+                    char full_dest[MAX_FILENAME * 2];
+                    snprintf(full_dest, sizeof(full_dest), "%s/%s", dir_path, new_name);
+                    create_file(full_dest, 0644);
+                    write_to_file(full_dest, content, 0);
+                    free(content);
+                    
+                    // Then delete original
+                    delete_file(src_path);
+                }
+                free(dir_path);
+                free(filename);
+            } else {
+                // Regular file move
+                move_file_to_dir(src_path, dest_path);
+            }
+        } else {
+            printf(COLOR_RED "Usage: move <src_file> <dest_dir> [new_name]\n" COLOR_RESET);
+            printf(COLOR_RED "       move -d <src_dir> <dest_dir> [new_name]\n" COLOR_RESET);
+        }
+    }
+}
     else if (strncmp(command, "chmod", 5) == 0)
     {
         char filename[MAX_FILENAME];
@@ -2652,26 +2818,9 @@ void execute_job(Job job)
     {
         handle_signal(SIGINT);
     }
-    else
-    {
-        // Handle external commands
-        pid_t pid = fork();
-        if (pid == 0)
-        {
-            char *args[] = {"/bin/sh", "-c", command, NULL};
-            execvp(args[0], args);
-            perror("execvp failed");
-            exit(1);
-        }
-        else if (pid < 0)
-        {
-            perror("fork failed");
-        }
-        else
-        {
-            // Parent waits for child to complete
-            waitpid(pid, NULL, 0);
-        }
+    else {
+        printf(COLOR_RED "Error: Unknown command '%s'\n" COLOR_RESET, command);
+        printf(COLOR_YELLOW "Type 'help' for a list of available commands\n" COLOR_RESET);
     }
     free(job.command);
 }
