@@ -1,4 +1,4 @@
-# Mini Système de Fichiers (mini_fs)
+# Mini Gestionnaire de Fichiers (mini_fs)
 
 ## Introduction
 
