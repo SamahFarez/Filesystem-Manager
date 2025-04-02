@@ -1,12 +1,5 @@
 #include "../include/scheduler.h"
-
-Job job_queue[MAX_JOBS];
-int front = 0, rear = 0, job_count = 0;
-pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t job_available = PTHREAD_COND_INITIALIZER;
-int running = 1;
-
-
+#include "../include/globals.h"
 
 
 void print_queue(int current_job_index)

@@ -1,48 +1,46 @@
 #include "../include/commands.h"
-
+#include "../include/filesystem.h"
+#include "../include/globals.h"
 
 void help()
 {
-    printf("\nAvailable commands:\n");
-    printf("-------------------\n");
+    printf("\n" COLOR_GREEN "Mini UNIX-like File System Help" COLOR_RESET "\n");
+    printf("===================================\n\n");
 
-    // File operations
-    printf("File Operations:\n");
-    printf("  create <filename> <size> <permissions>  - Create new file (permissions in octal)\n");
-    printf("  delete <filename>                       - Delete a file\n");
-    printf("  delete -d <dirname>                     - Delete an empty directory\n");
-    printf("  write [-a] <file> <data>                - Write data to file (-a for append)\n");
-    printf("  read <file> [bytes]                     - Read content from file (optional byte count)\n");
-    printf("  seek <file> <offset> <SET|CUR|END>      - Move read position in file\n");
-    printf("  chmod <permissions> <file               - Change file permissions\n");
-    printf("  stat <file>                             - Show file information\n");
+    printf(COLOR_YELLOW "File Operations:" COLOR_RESET "\n");
+    printf("  chmod <mode> <file>      - Change permissions (e.g., 755)\n");
+    printf("  close <file>             - Close file handle\n");
+    printf("  create <file> <perms>    - Create file with octal permissions (e.g., 644)\n");
+    printf("  delete <file>            - Delete a file\n");
+    printf("  open <file>              - Open file handle\n");
+    printf("  move <src> <dest> [newname] - Move file (optionally rename)\n");
+    printf("  read <file> [off] [len]  - Read file (optional offset and length)\n");
+    printf("  seek <file> <off> <whence> - Move file pointer (SET/CUR/END)\n");
+    printf("  stat <file>              - Show file metadata\n");
+    printf("  write [-a] <file> <data> - Write to file (-a to append)\n\n");
 
+    printf(COLOR_YELLOW "Directory Operations:" COLOR_RESET "\n");
+    printf("  cd <dir>                 - Change directory\n");
+    printf("  copy <src> <dest>        - Copy file\n");
+    printf("  create -d <dir>          - Create directory\n");
+    printf("  delete -d <dir>          - Delete empty directory\n");
+    printf("  dirinfo [dir]            - Show directory info\n");
+    printf("  list                     - List directory contents\n");
+    printf("  move -d <src> <dest> [newname] - Move directory (optionally rename)\n\n");
+    printf("  pwd                      - Print working directory\n");
+    printf("  tree [-i]                - Directory tree (-i shows inodes)\n\n");
 
-    // Directory operations
-    printf("\nDirectory Operations:\n");
-    printf("  create -d <dirname>                     - Create new directory\n");
-    printf("  cd <dirname>                            - Change directory (default: /home)\n");
-    printf("  list                                    - List directory contents\n");
-    printf("  pwd                                     - Print current directory path\n");
-    printf("  copy <file> <directory>                 - Copy file to another directory\n");
-    printf("  move <file> <directory>                 - Move file to another directory\n");
-    printf("  dirinfo [dirname]                       - Show directory information (default: current dir)\n");
-    // Link operations
-    printf("\nLink Operations:\n");
-    printf("  ln <source> <link>                      - Create hard link\n");
-    printf("  ln -s <source> <link>                   - Create symbolic link\n");
+    printf(COLOR_YELLOW "Link Operations:" COLOR_RESET "\n");
+    printf("  ln <target> <link>       - Create hard link\n");
+    printf("  ln -s <target> <link>    - Create symbolic link\n\n");
 
-    // System operations
-    printf("\nSystem Operations:\n");
-    printf("  format                                  - Format the filesystem (WARNING: erases all data)\n");
-    printf("  open <file>                             - Open a file\n");
-    printf("  close <file>                            - Close a file\n");
-    printf("  backup [name]                           - Create backup\n");
-    printf("  restore [name]                          - Restore from backup\n");
-    printf("  concurrency_test                        - Run concurrency test\n");
-    printf("  dirinfo [dirname]                       - Show directory information\n");    printf("  showages                              - Show paging bitmap\n");
-    printf("  help                                    - Show this help message\n");
-    printf("  quit                                    - Exit the terminal\n");
+    printf(COLOR_YELLOW "System Operations:" COLOR_RESET "\n");
+    printf("  backup [name]            - Create backup\n");
+    printf("  format                   - Wipe filesystem (DANGER!)\n");
+    printf("  help                     - This help message\n");
+    printf("  quit                     - Exit the system\n");
+    printf("  restore [name]           - Restore backup\n");
+    printf("  showpages [file]         - Show page table info\n");
 
     printf("\n");
 }
@@ -69,14 +67,14 @@ void execute_job(Job job)
         else
         {
             char filename[MAX_FILENAME];
-            int size, permissions;
-            if (sscanf(command, "create %s %d %o", filename, &size, &permissions) == 3)
+            int permissions;
+            if (sscanf(command, "create %s %o", filename, &permissions) == 2)
             {
-                create_file(filename, size, fs_state.users[0].username, permissions);
+                create_file(filename, permissions);
             }
             else
             {
-                printf(COLOR_RED "Usage: create <filename> <size> <permissions>\n" COLOR_RESET);
+                printf(COLOR_RED "Usage: create <filename> <permissions>\n" COLOR_RESET);
                 printf(COLOR_RED "Example: create myfile.txt 1024 644\n" COLOR_RESET);
             }
         }
@@ -157,13 +155,23 @@ void execute_job(Job job)
             }
             else
             {
-                printf("File not found\n");
+                printf(COLOR_RED "File not found\n" COLOR_RESET);
             }
         }
         else
         {
             printf("Usage: seek <filename> <offset> <SET|CUR|END>\n");
         }
+    }
+    else if (strcmp(command, "tree") == 0)
+    {
+        // Basic tree command without inodes
+        tree_command(0);
+    }
+    else if (strcmp(command, "tree -i") == 0)
+    {
+        // Tree command with inodes
+        tree_command(1);
     }
     else if (strncmp(command, "cd", 2) == 0)
     {
@@ -175,7 +183,7 @@ void execute_job(Job job)
         else
         {
             // If no argument given, go to home directory
-            change_directory("/root");
+            change_directory("/");
         }
     }
     else if (strcmp(command, "help") == 0)
@@ -301,16 +309,93 @@ void execute_job(Job job)
             printf(COLOR_RED "Usage: copy <filename> <directory>\n" COLOR_RESET);
         }
     }
+
     else if (strncmp(command, "move", 4) == 0)
     {
-        char filename[MAX_FILENAME], dirname[MAX_FILENAME];
-        if (sscanf(command, "move %s %s", filename, dirname) == 2)
+        if (strstr(command, "-d") != NULL)
         {
-            move_file_to_dir(filename, dirname);
+            // Handle directory move
+            char src_dir[MAX_FILENAME], dest_dir[MAX_FILENAME], new_name[MAX_FILENAME] = {0};
+
+            // Parse command - allow for optional new name
+            int parsed = sscanf(command, "move -d %s %s %s", src_dir, dest_dir, new_name);
+
+            if (parsed >= 2)
+            {
+                // If only 2 args, use source dirname as new name
+                if (parsed == 2)
+                {
+                    // Extract just the directory name from src path
+                    char *last_slash = strrchr(src_dir, '/');
+                    if (last_slash)
+                    {
+                        strncpy(new_name, last_slash + 1, MAX_FILENAME - 1);
+                    }
+                    else
+                    {
+                        strncpy(new_name, src_dir, MAX_FILENAME - 1);
+                    }
+                }
+
+                // Trim any trailing slashes
+                char *end = dest_dir + strlen(dest_dir) - 1;
+                while (end > dest_dir && (*end == '/' || *end == ' '))
+                    *end-- = '\0';
+
+                move_directory(src_dir, dest_dir, new_name[0] ? new_name : NULL);
+            }
+            else
+            {
+                printf(COLOR_RED "Usage: move -d <src_dir> <dest_dir> [newname]\n" COLOR_RESET);
+            }
         }
         else
         {
-            printf(COLOR_RED "Usage: move <filename> <directory>\n" COLOR_RESET);
+
+            // Check if first argument is a directory
+            char first_arg[MAX_FILENAME];
+            if (sscanf(command, "move %s", first_arg) == 1)
+            {
+                int dir_idx = find_directory_from_path(first_arg);
+                if (dir_idx != -1)
+                {
+                    printf(COLOR_RED "Error: Use '-d' flag for directory moves\n" COLOR_RESET);
+                    printf(COLOR_RED "Usage: move -d <src_dir> <dest_dir> [newname]\n" COLOR_RESET);
+                    free(job.command);
+                    return;
+                }
+            }
+            // Handle file move (existing code)
+            char src_path[MAX_FILENAME], dest_path[MAX_FILENAME], new_name[MAX_FILENAME] = {0};
+
+            char *token = strtok((char *)command + 5, " ");
+            if (!token)
+            {
+                printf(COLOR_RED "Usage: move <src> <dest> [newname]\n" COLOR_RESET);
+                return;
+            }
+            strncpy(src_path, token, MAX_FILENAME - 1);
+
+            token = strtok(NULL, " ");
+            if (!token)
+            {
+                printf(COLOR_RED "Usage: move <src> <dest> [newname]\n" COLOR_RESET);
+                return;
+            }
+            strncpy(dest_path, token, MAX_FILENAME - 1);
+
+            token = strtok(NULL, " ");
+            if (token)
+            {
+                strncpy(new_name, token, MAX_FILENAME - 1);
+            }
+
+            // Trim any trailing slashes from dest_path
+            char *end = dest_path + strlen(dest_path) - 1;
+            while (end > dest_path && (*end == '/' || *end == ' '))
+                *end-- = '\0';
+
+            move_file_to_dir(src_path, dest_path, new_name[0] ? new_name : NULL);
         }
     }
     else if (strncmp(command, "chmod", 5) == 0)
@@ -385,24 +470,8 @@ void execute_job(Job job)
     }
     else
     {
-        // Handle external commands
-        pid_t pid = fork();
-        if (pid == 0)
-        {
-            char *args[] = {"/bin/sh", "-c", command, NULL};
-            execvp(args[0], args);
-            perror("execvp failed");
-            exit(1);
-        }
-        else if (pid < 0)
-        {
-            perror("fork failed");
-        }
-        else
-        {
-            // Parent waits for child to complete
-            waitpid(pid, NULL, 0);
-        }
+        printf(COLOR_RED "Error: Unknown command '%s'\n" COLOR_RESET, command);
+        printf(COLOR_YELLOW "Type 'help' for a list of available commands\n" COLOR_RESET);
     }
     free(job.command);
 }
