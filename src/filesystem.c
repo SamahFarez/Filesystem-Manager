@@ -341,7 +341,7 @@ void initialize_directories()
         .filename = "readme.txt",
         .size = 16,
         .owner = "root",
-        .permissions = 0644,
+        .permissions = 0777,
         .creation_time = time(NULL),
         .modification_time = time(NULL),
         .content_size = strlen("HELLO WORLD") + 1,
@@ -359,7 +359,7 @@ void initialize_directories()
         .filename = "notes.txt",
         .size = 8,
         .owner = "root",
-        .permissions = 0600,
+        .permissions = 0777,
         .creation_time = time(NULL),
         .modification_time = time(NULL),
         .content_size = strlen("HELLO WORLD") + 1,
@@ -1104,7 +1104,6 @@ void list_files() {
 }
 
 
-
 int write_to_file(const char *path, const char *data, int append) {
     pthread_mutex_lock(&mutex);
     
@@ -1131,7 +1130,7 @@ int write_to_file(const char *path, const char *data, int append) {
     char *new_content;
 
     if (append) {
-        // Append mode
+        // Append mode - all hardlinks will see the appended content
         new_content_size = file->content_size + data_len;
         new_content = realloc(file->content, new_content_size + 1);
         if (!new_content) {
@@ -1143,7 +1142,7 @@ int write_to_file(const char *path, const char *data, int append) {
         }
         strcat(new_content, data);
     } else {
-        // Overwrite mode
+        // Overwrite mode - all hardlinks will see the new content
         new_content_size = data_len;
         new_content = strdup(data);
         if (!new_content) {
@@ -1153,9 +1152,7 @@ int write_to_file(const char *path, const char *data, int append) {
             pthread_mutex_unlock(&mutex);
             return -1;
         }
-        if (file->content) {
-            free(file->content);
-        }
+        // Don't free old content yet - other hardlinks might still need it
     }
 
     // Check if we need more pages
@@ -1203,15 +1200,43 @@ int write_to_file(const char *path, const char *data, int append) {
             }
         }
 
+        // Update all hardlinks to use the new page table
+        for (int d = 0; d < MAX_DIRECTORIES; d++) {
+            if (strlen(fs_state.directories[d].dirname) > 0) {
+                for (int f = 0; f < fs_state.directories[d].file_count; f++) {
+                    if (fs_state.directories[d].files[f].inode == file->inode) {
+                        // Free old page table if it's different from the new one
+                        if (fs_state.directories[d].files[f].page_table != file->page_table) {
+                            free(fs_state.directories[d].files[f].page_table);
+                        }
+                        fs_state.directories[d].files[f].page_table = new_table;
+                        fs_state.directories[d].files[f].page_table_size = pages_needed;
+                    }
+                }
+            }
+        }
+
         file->page_table = new_table;
         file->page_table_size = pages_needed;
     }
 
-    // Update file metadata
-    file->content = new_content;
-    file->content_size = new_content_size;
-    file->size = new_content_size;
-    file->modification_time = time(NULL);
+    // Update content for all hardlinks
+    for (int d = 0; d < MAX_DIRECTORIES; d++) {
+        if (strlen(fs_state.directories[d].dirname) > 0) {
+            for (int f = 0; f < fs_state.directories[d].file_count; f++) {
+                if (fs_state.directories[d].files[f].inode == file->inode) {
+                    // Free old content if it's different from the new content
+                    if (!append && fs_state.directories[d].files[f].content != file->content) {
+                        free(fs_state.directories[d].files[f].content);
+                    }
+                    fs_state.directories[d].files[f].content = new_content;
+                    fs_state.directories[d].files[f].content_size = new_content_size;
+                    fs_state.directories[d].files[f].size = new_content_size;
+                    fs_state.directories[d].files[f].modification_time = time(NULL);
+                }
+            }
+        }
+    }
 
     save_state();
     printf(COLOR_GREEN "Successfully wrote %d bytes to %s (new size: %d bytes)\n" COLOR_RESET,
@@ -1783,11 +1808,13 @@ void create_hard_link(const char *source_path, const char *link_path)
 
     // Find source file
     File *src_file_ptr = NULL;
+    int src_file_idx = -1;
     for (int i = 0; i < fs_state.directories[src_dir_idx].file_count; i++)
     {
         if (strcmp(fs_state.directories[src_dir_idx].files[i].filename, src_file) == 0)
         {
             src_file_ptr = &fs_state.directories[src_dir_idx].files[i];
+            src_file_idx = i;
             break;
         }
     }
@@ -1795,6 +1822,13 @@ void create_hard_link(const char *source_path, const char *link_path)
     if (!src_file_ptr)
     {
         printf(COLOR_RED "Error: Source file not found: %s\n" COLOR_RESET, source_path);
+        goto cleanup;
+    }
+
+    // Don't allow hard links to symlinks
+    if (src_file_ptr->is_symlink)
+    {
+        printf(COLOR_RED "Error: Cannot create hard link to symbolic link\n" COLOR_RESET);
         goto cleanup;
     }
 
@@ -1817,16 +1851,41 @@ void create_hard_link(const char *source_path, const char *link_path)
     }
 
     // Create hard link (shares all data with original)
-    File new_link = *src_file_ptr;
+    File new_link;
+    memset(&new_link, 0, sizeof(File));
+    
+    // Copy all metadata
+    new_link = *src_file_ptr;
+    
+    // Set new filename
     strncpy(new_link.filename, link_file, MAX_FILENAME - 1);
     new_link.filename[MAX_FILENAME - 1] = '\0';
+    
+    // Set new creation time
     new_link.creation_time = time(NULL);
-
-    // Share the same content and page table
+    
+    // Share the same inode, content, and page table
+    new_link.inode = src_file_ptr->inode;
     new_link.content = src_file_ptr->content;
     new_link.page_table = src_file_ptr->page_table;
     new_link.is_symlink = 0;
     new_link.link_target = NULL;
+    new_link.ref_count = src_file_ptr->ref_count + 1; // Increment ref count
+
+    // Update reference count on original and all other links
+    for (int d = 0; d < MAX_DIRECTORIES; d++)
+    {
+        if (strlen(fs_state.directories[d].dirname))
+        {
+            for (int f = 0; f < fs_state.directories[d].file_count; f++)
+            {
+                if (fs_state.directories[d].files[f].inode == src_file_ptr->inode)
+                {
+                    fs_state.directories[d].files[f].ref_count = new_link.ref_count;
+                }
+            }
+        }
+    }
 
     // Add to directory
     if (fs_state.directories[link_dir_idx].file_count >= MAX_FILES)
@@ -1838,7 +1897,8 @@ void create_hard_link(const char *source_path, const char *link_path)
     fs_state.directories[link_dir_idx].files[fs_state.directories[link_dir_idx].file_count++] = new_link;
 
     save_state();
-    printf(COLOR_GREEN "Created hard link: %s -> %s\n" COLOR_RESET, link_path, source_path);
+    printf(COLOR_GREEN "Created hard link: %s -> %s (inode: %lu, refcount: %d)\n" COLOR_RESET, 
+           link_path, source_path, new_link.inode, new_link.ref_count);
 
 cleanup:
     free(src_dir);
@@ -1847,7 +1907,6 @@ cleanup:
     free(link_file);
     pthread_mutex_unlock(&mutex);
 }
-
 
 void create_symbolic_link(const char *source, const char *link_path) {
     pthread_mutex_lock(&mutex);
