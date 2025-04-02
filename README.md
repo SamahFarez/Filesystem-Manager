@@ -1,74 +1,83 @@
-# Mini Filesystem (mini_fs)
+# Mini Système de Fichiers (mini_fs)
 
 ## Introduction
 
-This project implements a complete in-memory filesystem with:
-- File and directory operations
-- Permission management
-- Symbolic and hard links
-- Paging system for file storage
-- Multi-user support
-- Backup/restore functionality
+Ce projet implémente un système de fichiers en mémoire complet avec :
+- Opérations sur les fichiers et répertoires
+- Gestion des permissions
+- Liens symboliques et physiques
+- Système de pagination pour le stockage
+- Support multi-utilisateurs
+- Fonctionnalités de sauvegarde/restauration
 
-## Building the Project
+## Compilation du projet
 
-To compile the program, use the provided Makefile:
+Pour compiler le programme, utilisez le Makefile fourni :
 
 ```bash
 make
 ```
 
-This will create the `mini_fs` executable.
+Ceci créera l'exécutable `mini_fs`.
 
-## Usage
+## Utilisation
 
-Run the filesystem manager with:
+Lancez le gestionnaire de système de fichiers avec :
 
 ```bash
 ./mini_fs
 ```
 
-### Available Commands
+### Commandes disponibles
 
-Once in the interactive shell, you can use the ```help()``` command
+Une fois dans le shell interactif, vous pouvez utiliser la commande ```help()```
 
+## Dépannage
 
-## Troubleshooting
-
-### Compilation Issues
-- Ensure you have required dependencies:
+### Problèmes de compilation
+- Assurez-vous d'avoir les dépendances requises :
   ```bash
   sudo apt install build-essential
   ```
-- If you get pthread errors, try:
+- Si vous obtenez des erreurs pthread, essayez :
   ```bash
   make clean
   make
   ```
 
-### Runtime Issues
-- "Permission denied" errors: Check file permissions and owner
-- "File not found": Verify path and current directory
-- "Directory not empty": Remove contents before deleting directory
+### Problèmes d'exécution
+- Erreurs "Permission denied" : Vérifiez les permissions et le propriétaire
+- "Fichier non trouvé" : Vérifiez le chemin et le répertoire courant
+- "Répertoire non vide" : Supprimez le contenu avant de supprimer le répertoire
 
-## Implementation Details
+## Détails d'implémentation
 
-- Uses in-memory storage with simulated paging
-- Supports multiple users with authentication
-- Implements full path resolution
-- Maintains file metadata including:
-  - Permissions
-  - Ownership
-  - Timestamps
-  - Link counts
+- Utilise un stockage en mémoire avec pagination simulée
+- Supporte plusieurs utilisateurs avec authentification
+- Implémente la résolution complète des chemins
+- Gère les métadonnées des fichiers incluant :
+  - Les permissions
+  - La propriété
+  - Les horodatages
+  - Le comptage des liens
 
-## Future Enhancements
+## Améliorations futures
 
-- Persistent storage to disk
-- Extended attribute support
-- File compression
-- Network sharing capabilities
+- Stockage persistant sur disque
+- Support des attributs étendus
+- Compression des fichiers
+- Capacités de partage réseau
 
-## License
+## Licence
 
-This project is released under the MIT License.
+Ce projet est publié sous licence MIT.
+```
+
+Pour télécharger ce fichier :
+1. Copiez tout le contenu ci-dessus
+2. Collez-le dans un nouveau fichier nommé `README.md`
+3. Enregistrez-le sur votre ordinateur
+
+Vous pouvez aussi utiliser cette commande pour le télécharger directement (si vous avez configuré un dépôt) :
+```bash
+wget https://votre-lien/README.fr.md -O README.md
