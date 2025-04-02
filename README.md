@@ -1,105 +1,73 @@
-
-# Filesystem Manager
+# Mini Filesystem (mini_fs)
 
 ## Introduction
 
-This project implements a basic filesystem manager that allows users to create, list, delete files, and manage file permissions in a simulated filesystem stored in a single file (`filesystem.img`).
+This project implements a complete in-memory filesystem with:
+- File and directory operations
+- Permission management
+- Symbolic and hard links
+- Paging system for file storage
+- Multi-user support
+- Backup/restore functionality
 
-## Compilation
+## Building the Project
 
-To compile the program, use the following command:
+To compile the program, use the provided Makefile:
 
 ```bash
-gcc -o fs_manager filesystem_manager.c
+make
 ```
+
+This will create the `mini_fs` executable.
 
 ## Usage
 
-### Initialize the Filesystem
-
-Before using any commands, initialize the filesystem:
+Run the filesystem manager with:
 
 ```bash
-./fs_manager init
+./mini_fs
 ```
 
-This creates a `filesystem.img` file that acts as your virtual filesystem.
+### Available Commands
 
-### Create a File
+Once in the interactive shell, you can use the ```help()``` command
 
-To create a new file in the filesystem with specific permissions:
-
-```bash
-./fs_manager create <filename> <permissions>
-```
-
-Example:
-
-```bash
-./fs_manager create myfile.txt 644
-```
-
-### List Files
-
-To view all files in the filesystem:
-
-```bash
-./fs_manager list
-```
-
-### Delete a File
-
-To delete a file from the filesystem:
-
-```bash
-./fs_manager delete <filename>
-```
-
-Example:
-
-```bash
-./fs_manager delete myfile.txt
-```
-
-### Change File Permissions
-
-To modify the permissions of a file:
-
-```bash
-./fs_manager chmod <filename> <new_permissions>
-```
-
-Example:
-
-```bash
-./fs_manager chmod myfile.txt 755
-```
-
-## Notes
-
-- The filesystem must be initialized before using it.
-- Permissions follow UNIX-style (e.g., `644`, `755`).
-- Currently, the system does not support directories or file content storage.
-- Future enhancements may include file moving, copying, and directory support.
 
 ## Troubleshooting
 
-### "File not found" error?
+### Compilation Issues
+- Ensure you have required dependencies:
+  ```bash
+  sudo apt install build-essential
+  ```
+- If you get pthread errors, try:
+  ```bash
+  make clean
+  make
+  ```
 
-- Ensure you typed the correct filename.
-- Run `./fs_manager list` to check existing files.
+### Runtime Issues
+- "Permission denied" errors: Check file permissions and owner
+- "File not found": Verify path and current directory
+- "Directory not empty": Remove contents before deleting directory
 
-### "Filesystem not initialized" error?
+## Implementation Details
 
-- Run `./fs_manager init` first.
+- Uses in-memory storage with simulated paging
+- Supports multiple users with authentication
+- Implements full path resolution
+- Maintains file metadata including:
+  - Permissions
+  - Ownership
+  - Timestamps
+  - Link counts
 
-### Compilation issues?
+## Future Enhancements
 
-- Ensure GCC is installed. You can install it using: 
-
-```bash
-sudo apt install gcc
-```
+- Persistent storage to disk
+- Extended attribute support
+- File compression
+- Network sharing capabilities
 
 ## License
 
