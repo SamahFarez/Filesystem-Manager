@@ -1,0 +1,954 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.13.2"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Projet_OS: Référence du fichier C:/code/Projet_OS/src/filesystem2.c</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+  $(function() { init_search(); });
+/* @license-end */
+</script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">Projet_OS<span id="projectnumber">&#160;1.0 Alpha</span>
+   </div>
+  </td>
+    <td>        <div id="MSearchBox" class="MSearchBoxInactive">
+        <span class="left">
+          <span id="MSearchSelect"                onmouseover="return searchBox.OnSearchSelectShow()"                onmouseout="return searchBox.OnSearchSelectHide()">&#160;</span>
+          <input type="text" id="MSearchField" value="" placeholder="Recherche" accesskey="S"
+               onfocus="searchBox.OnSearchFieldFocus(true)" 
+               onblur="searchBox.OnSearchFieldFocus(false)" 
+               onkeyup="searchBox.OnSearchFieldChange(event)"/>
+          </span><span class="right">
+            <a id="MSearchClose" href="javascript:searchBox.CloseResultsWindow()"><img id="MSearchCloseImg" border="0" src="search/close.svg" alt=""/></a>
+          </span>
+        </div>
+</td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Généré par Doxygen 1.13.2 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() { codefold.init(0); });
+/* @license-end */
+</script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function(){ initResizable(false); });
+/* @license-end */
+</script>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Chargement...</div>
+<div class="SRStatus" id="Searching">Recherche...</div>
+<div class="SRStatus" id="NoMatches">Aucune correspondance</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_050edd66366d13764f98250ef6db77f6.html">code</a></li><li class="navelem"><a class="el" href="dir_b57a8e1ad58ce66e5eaca629d15cea42.html">Projet_OS</a></li><li class="navelem"><a class="el" href="dir_a1ac66f9056d70ba10a03cd739f6ae13.html">src</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div id="doc-content">
+<div class="header">
+  <div class="summary">
+<a href="#func-members">Fonctions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
+  <div class="headertitle"><div class="title">Référence du fichier filesystem2.c</div></div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><code>#include &quot;<a class="el" href="filesystem_8h_source.html">../include/filesystem.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="paging_8h_source.html">../include/paging.h</a>&quot;</code><br />
+</div><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Fonctions</h2></td></tr>
+<tr class="memitem:a59938e85b7f60cfb477647ed21b8a982" id="r_a59938e85b7f60cfb477647ed21b8a982"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a59938e85b7f60cfb477647ed21b8a982">login</a> ()</td></tr>
+<tr class="memdesc:a59938e85b7f60cfb477647ed21b8a982"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fonction permettant la connexion d'un utilisateur.  <br /></td></tr>
+<tr class="separator:a59938e85b7f60cfb477647ed21b8a982"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ceba55df8873c7ed2b57f36a5dbb012" id="r_a3ceba55df8873c7ed2b57f36a5dbb012"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3ceba55df8873c7ed2b57f36a5dbb012">initialize_directories</a> ()</td></tr>
+<tr class="memdesc:a3ceba55df8873c7ed2b57f36a5dbb012"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise les répertoires du système de fichiers avec des valeurs par défaut.  <br /></td></tr>
+<tr class="separator:a3ceba55df8873c7ed2b57f36a5dbb012"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f35f5c962b2bbb71fc9d56daab8b4fe" id="r_a7f35f5c962b2bbb71fc9d56daab8b4fe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7f35f5c962b2bbb71fc9d56daab8b4fe">save_state</a> ()</td></tr>
+<tr class="memdesc:a7f35f5c962b2bbb71fc9d56daab8b4fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sauvegarde l'état du système de fichiers dans un fichier binaire.  <br /></td></tr>
+<tr class="separator:a7f35f5c962b2bbb71fc9d56daab8b4fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14de24c538556c8f0fd5ff0429dac695" id="r_a14de24c538556c8f0fd5ff0429dac695"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a14de24c538556c8f0fd5ff0429dac695">load_state</a> ()</td></tr>
+<tr class="memdesc:a14de24c538556c8f0fd5ff0429dac695"><td class="mdescLeft">&#160;</td><td class="mdescRight">Charge l'état du système de fichiers depuis un fichier binaire.  <br /></td></tr>
+<tr class="separator:a14de24c538556c8f0fd5ff0429dac695"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad60fc23fdfbb59d8f4c4b440edf25cc7" id="r_ad60fc23fdfbb59d8f4c4b440edf25cc7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad60fc23fdfbb59d8f4c4b440edf25cc7">file_seek</a> (<a class="el" href="struct_file.html">File</a> *file, int offset, int whence)</td></tr>
+<tr class="memdesc:ad60fc23fdfbb59d8f4c4b440edf25cc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Déplace le curseur dans un fichier.  <br /></td></tr>
+<tr class="separator:ad60fc23fdfbb59d8f4c4b440edf25cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade0177c768010db0ff3453e030bb7e0c" id="r_ade0177c768010db0ff3453e030bb7e0c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ade0177c768010db0ff3453e030bb7e0c">create_file</a> (char *filename, int size, char *owner, int permissions)</td></tr>
+<tr class="memdesc:ade0177c768010db0ff3453e030bb7e0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crée un fichier dans le répertoire actuel.  <br /></td></tr>
+<tr class="separator:ade0177c768010db0ff3453e030bb7e0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeae5bdf0b2ccf1d6d86215ad04f9c2ed" id="r_aeae5bdf0b2ccf1d6d86215ad04f9c2ed"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aeae5bdf0b2ccf1d6d86215ad04f9c2ed">create_directory</a> (char *dirname)</td></tr>
+<tr class="memdesc:aeae5bdf0b2ccf1d6d86215ad04f9c2ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crée un répertoire.  <br /></td></tr>
+<tr class="separator:aeae5bdf0b2ccf1d6d86215ad04f9c2ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44fdfefd73eed7f04ff9f0fed4660ae8" id="r_a44fdfefd73eed7f04ff9f0fed4660ae8"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a44fdfefd73eed7f04ff9f0fed4660ae8">get_current_working_directory</a> ()</td></tr>
+<tr class="memdesc:a44fdfefd73eed7f04ff9f0fed4660ae8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtient le répertoire de travail actuel.  <br /></td></tr>
+<tr class="separator:a44fdfefd73eed7f04ff9f0fed4660ae8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96d98c0ddb0d46a92d6b2d4a98b821f0" id="r_a96d98c0ddb0d46a92d6b2d4a98b821f0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a96d98c0ddb0d46a92d6b2d4a98b821f0">delete_file</a> (char *filename)</td></tr>
+<tr class="memdesc:a96d98c0ddb0d46a92d6b2d4a98b821f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supprime un fichier du répertoire actuel.  <br /></td></tr>
+<tr class="separator:a96d98c0ddb0d46a92d6b2d4a98b821f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a582c8002517dac69236a328879c42d75" id="r_a582c8002517dac69236a328879c42d75"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a582c8002517dac69236a328879c42d75">delete_directory</a> (const char *dirname)</td></tr>
+<tr class="memdesc:a582c8002517dac69236a328879c42d75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supprime un répertoire du système de fichiers virtuel.  <br /></td></tr>
+<tr class="separator:a582c8002517dac69236a328879c42d75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52cf0b8548d19276e7337e1fc0717f28" id="r_a52cf0b8548d19276e7337e1fc0717f28"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a52cf0b8548d19276e7337e1fc0717f28">list_files</a> ()</td></tr>
+<tr class="memdesc:a52cf0b8548d19276e7337e1fc0717f28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Affiche la liste des fichiers et des sous-répertoires dans le répertoire courant.  <br /></td></tr>
+<tr class="separator:a52cf0b8548d19276e7337e1fc0717f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a037429cc84bc4f7d19c3155156abd593" id="r_a037429cc84bc4f7d19c3155156abd593"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a037429cc84bc4f7d19c3155156abd593">write_to_file</a> (const char *filename, const char *data, int append)</td></tr>
+<tr class="memdesc:a037429cc84bc4f7d19c3155156abd593"><td class="mdescLeft">&#160;</td><td class="mdescRight">Écrit des données dans un fichier existant.  <br /></td></tr>
+<tr class="separator:a037429cc84bc4f7d19c3155156abd593"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a525e231be66f2e8b4687e167965746fe" id="r_a525e231be66f2e8b4687e167965746fe"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a525e231be66f2e8b4687e167965746fe">read_from_file</a> (const char *filename, int bytes_to_read, int offset)</td></tr>
+<tr class="memdesc:a525e231be66f2e8b4687e167965746fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lit des données depuis un fichier existant.  <br /></td></tr>
+<tr class="separator:a525e231be66f2e8b4687e167965746fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6074ed0bb92d2f9c3f0ad7517f8c7008" id="r_a6074ed0bb92d2f9c3f0ad7517f8c7008"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6074ed0bb92d2f9c3f0ad7517f8c7008">change_permissions</a> (char *filename, int mode)</td></tr>
+<tr class="separator:a6074ed0bb92d2f9c3f0ad7517f8c7008"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab72410812b51dc8f2e03e32f7bec57e" id="r_aab72410812b51dc8f2e03e32f7bec57e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aab72410812b51dc8f2e03e32f7bec57e">print_file_info</a> (const char *filename)</td></tr>
+<tr class="memdesc:aab72410812b51dc8f2e03e32f7bec57e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Affiche les informations détaillées d'un fichier.  <br /></td></tr>
+<tr class="separator:aab72410812b51dc8f2e03e32f7bec57e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae33af0d70c65284428f93385cbc1d056" id="r_ae33af0d70c65284428f93385cbc1d056"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae33af0d70c65284428f93385cbc1d056">change_directory</a> (char *dirname)</td></tr>
+<tr class="memdesc:ae33af0d70c65284428f93385cbc1d056"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change le répertoire courant du système de fichiers.  <br /></td></tr>
+<tr class="separator:ae33af0d70c65284428f93385cbc1d056"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1bef8a6a19bbe82e87c98fb0c3d9e95" id="r_ae1bef8a6a19bbe82e87c98fb0c3d9e95"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae1bef8a6a19bbe82e87c98fb0c3d9e95">copy_file_to_dir</a> (const char *filename, const char *dirname)</td></tr>
+<tr class="memdesc:ae1bef8a6a19bbe82e87c98fb0c3d9e95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copie un fichier dans un autre répertoire.  <br /></td></tr>
+<tr class="separator:ae1bef8a6a19bbe82e87c98fb0c3d9e95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7627df82032832d994b25429782d0c10" id="r_a7627df82032832d994b25429782d0c10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7627df82032832d994b25429782d0c10">move_file_to_dir</a> (const char *filename, const char *dirname)</td></tr>
+<tr class="memdesc:a7627df82032832d994b25429782d0c10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Déplace un fichier vers un autre répertoire.  <br /></td></tr>
+<tr class="separator:a7627df82032832d994b25429782d0c10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23bdaeeea3496325b0f7032069a9eef0" id="r_a23bdaeeea3496325b0f7032069a9eef0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a23bdaeeea3496325b0f7032069a9eef0">create_hard_link</a> (const char *source, const char *link)</td></tr>
+<tr class="separator:a23bdaeeea3496325b0f7032069a9eef0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae823f1d6cd167c60dfd447da3ad96e68" id="r_ae823f1d6cd167c60dfd447da3ad96e68"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae823f1d6cd167c60dfd447da3ad96e68">create_symbolic_link</a> (const char *source, const char *link)</td></tr>
+<tr class="memdesc:ae823f1d6cd167c60dfd447da3ad96e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crée un lien symbolique vers un fichier existant ou inexistant.  <br /></td></tr>
+<tr class="separator:ae823f1d6cd167c60dfd447da3ad96e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adebcaa9d8fc92f3c71aa9985b151820c" id="r_adebcaa9d8fc92f3c71aa9985b151820c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adebcaa9d8fc92f3c71aa9985b151820c">format_filesystem</a> ()</td></tr>
+<tr class="memdesc:adebcaa9d8fc92f3c71aa9985b151820c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formate le système de fichiers en effaçant toutes les données.  <br /></td></tr>
+<tr class="separator:adebcaa9d8fc92f3c71aa9985b151820c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a176386ab52e4f8e30b69b51e34857789" id="r_a176386ab52e4f8e30b69b51e34857789"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a176386ab52e4f8e30b69b51e34857789">backup_filesystem</a> (const char *backup_name)</td></tr>
+<tr class="memdesc:a176386ab52e4f8e30b69b51e34857789"><td class="mdescLeft">&#160;</td><td class="mdescRight">Crée une copie de sauvegarde du système de fichiers.  <br /></td></tr>
+<tr class="separator:a176386ab52e4f8e30b69b51e34857789"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b14d434f139d0d189838afbb375b6ab" id="r_a6b14d434f139d0d189838afbb375b6ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6b14d434f139d0d189838afbb375b6ab">restore_filesystem</a> (const char *backup_name)</td></tr>
+<tr class="memdesc:a6b14d434f139d0d189838afbb375b6ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restaure le système de fichiers à partir d'un fichier de sauvegarde.  <br /></td></tr>
+<tr class="separator:a6b14d434f139d0d189838afbb375b6ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ccd18a8c8587779cb2accd2de201a4b" id="r_a7ccd18a8c8587779cb2accd2de201a4b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7ccd18a8c8587779cb2accd2de201a4b">show_directory_info</a> (const char *dirname)</td></tr>
+<tr class="memdesc:a7ccd18a8c8587779cb2accd2de201a4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Affiche les informations d'un répertoire.  <br /></td></tr>
+<tr class="separator:a7ccd18a8c8587779cb2accd2de201a4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a5e8a009b88c3af2269958f190efae3f7" id="r_a5e8a009b88c3af2269958f190efae3f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_file_system_state.html">FileSystemState</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5e8a009b88c3af2269958f190efae3f7">fs_state</a></td></tr>
+<tr class="memdesc:a5e8a009b88c3af2269958f190efae3f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Structure contenant l'état du système de fichiers.  <br /></td></tr>
+<tr class="separator:a5e8a009b88c3af2269958f190efae3f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4acff8232e4aec9cd5c6dc200ac55ef3" id="r_a4acff8232e4aec9cd5c6dc200ac55ef3"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4acff8232e4aec9cd5c6dc200ac55ef3">mutex</a> = PTHREAD_MUTEX_INITIALIZER</td></tr>
+<tr class="memdesc:a4acff8232e4aec9cd5c6dc200ac55ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mutex pour gérer l'accès concurrentiel au système de fichiers.  <br /></td></tr>
+<tr class="separator:a4acff8232e4aec9cd5c6dc200ac55ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa524f23390f58634e5d9afa4540d6df5" id="r_aa524f23390f58634e5d9afa4540d6df5"><td class="memItemLeft" align="right" valign="top">unsigned char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa524f23390f58634e5d9afa4540d6df5">page_bitmap</a> [<a class="el" href="filesystem__manager_8c.html#ac1a7ceca1ee1655830e8f2df4c98ab08">TOTAL_PAGES</a>/8]</td></tr>
+<tr class="memdesc:aa524f23390f58634e5d9afa4540d6df5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bitmap de gestion des pages mémoire.  <br /></td></tr>
+<tr class="separator:aa524f23390f58634e5d9afa4540d6df5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<h2 class="groupheader">Documentation des fonctions</h2>
+<a id="a176386ab52e4f8e30b69b51e34857789" name="a176386ab52e4f8e30b69b51e34857789"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a176386ab52e4f8e30b69b51e34857789">&#9670;&#160;</a></span>backup_filesystem()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void backup_filesystem </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>backup_name</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Crée une copie de sauvegarde du système de fichiers. </p>
+<p>Cette fonction crée une copie du fichier de stockage actuel dans un fichier de sauvegarde spécifié. Le fichier de sauvegarde sera nommé en ajoutant l'extension <code>.bak</code> au nom fourni par l'utilisateur. Elle copie les données du fichier de stockage source vers le fichier de sauvegarde destination en utilisant un tampon de lecture-écriture.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">backup_name</td><td>Le nom de base du fichier de sauvegarde (sans extension).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si un problème survient lors de la création ou de l'écriture du fichier de sauvegarde, un message d'erreur est affiché. Si l'un des fichiers ne peut pas être ouvert, la fonction retourne sans effectuer de sauvegarde.</dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Un fichier de sauvegarde est créé, contenant une copie exacte du système de fichiers actuel. </dd></dl>
+
+</div>
+</div>
+<a id="ae33af0d70c65284428f93385cbc1d056" name="ae33af0d70c65284428f93385cbc1d056"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae33af0d70c65284428f93385cbc1d056">&#9670;&#160;</a></span>change_directory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void change_directory </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>dirname</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Change le répertoire courant du système de fichiers. </p>
+<p>Cette fonction permet de naviguer entre les répertoires en utilisant des chemins relatifs ou absolus. Elle prend en charge les cas spéciaux :</p><ul>
+<li><code>.</code> pour rester dans le même répertoire.</li>
+<li><code>..</code> pour remonter au répertoire parent (si possible).</li>
+<li>Un chemin absolu (commençant par <code>/</code>).</li>
+<li>Un chemin relatif pour changer vers un sous-répertoire du répertoire courant.</li>
+</ul>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dirname</td><td>Nom ou chemin du répertoire cible.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>La fonction utilise un mutex pour protéger l'accès à la structure du système de fichiers. </dd>
+<dd>
+Si le répertoire n'existe pas, un message d'erreur est affiché.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si le répertoire cible n'existe pas ou si l'utilisateur tente de remonter alors qu'il est déjà à la racine, un message d'erreur est affiché et le répertoire courant ne change pas. </dd></dl>
+
+</div>
+</div>
+<a id="a6074ed0bb92d2f9c3f0ad7517f8c7008" name="a6074ed0bb92d2f9c3f0ad7517f8c7008"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6074ed0bb92d2f9c3f0ad7517f8c7008">&#9670;&#160;</a></span>change_permissions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void change_permissions </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>mode</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae1bef8a6a19bbe82e87c98fb0c3d9e95" name="ae1bef8a6a19bbe82e87c98fb0c3d9e95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1bef8a6a19bbe82e87c98fb0c3d9e95">&#9670;&#160;</a></span>copy_file_to_dir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void copy_file_to_dir </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>dirname</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Copie un fichier dans un autre répertoire. </p>
+<p>Cette fonction permet de copier un fichier existant dans un autre répertoire du système de fichiers. Elle vérifie l'existence du fichier source, l'existence du répertoire cible, et si un fichier du même nom existe déjà dans le répertoire cible.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Nom du fichier à copier. </td></tr>
+    <tr><td class="paramname">dirname</td><td>Nom du répertoire de destination.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>La fonction utilise un mutex pour protéger l'accès à la structure du système de fichiers. </dd>
+<dd>
+Si le fichier ou le répertoire cible n'existe pas, ou si le répertoire est plein, un message d'erreur est affiché.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si un fichier du même nom existe déjà dans le répertoire cible, la copie est annulée. </dd></dl>
+
+</div>
+</div>
+<a id="aeae5bdf0b2ccf1d6d86215ad04f9c2ed" name="aeae5bdf0b2ccf1d6d86215ad04f9c2ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeae5bdf0b2ccf1d6d86215ad04f9c2ed">&#9670;&#160;</a></span>create_directory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int create_directory </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>dirname</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Crée un répertoire. </p>
+<p>Cette fonction crée un répertoire dans le système de fichiers, en vérifiant qu'il n'existe pas déjà et qu'il y a de la place.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dirname</td><td>Le nom du répertoire à créer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Renvoie</dt><dd>0 en cas de succès, -1 en cas d'erreur (répertoire déjà existant, répertoire plein, etc.). </dd></dl>
+
+</div>
+</div>
+<a id="ade0177c768010db0ff3453e030bb7e0c" name="ade0177c768010db0ff3453e030bb7e0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade0177c768010db0ff3453e030bb7e0c">&#9670;&#160;</a></span>create_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int create_file </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>size</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>owner</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>permissions</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Crée un fichier dans le répertoire actuel. </p>
+<p>Cette fonction crée un fichier avec un nom, une taille, un propriétaire et des permissions spécifiés. Elle alloue également de la mémoire pour la table de pages du fichier et tente d'allouer des pages physiques pour le fichier.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Le nom du fichier à créer. </td></tr>
+    <tr><td class="paramname">size</td><td>La taille du fichier en octets. </td></tr>
+    <tr><td class="paramname">owner</td><td>Le propriétaire du fichier. </td></tr>
+    <tr><td class="paramname">permissions</td><td>Les permissions d'accès au fichier. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Renvoie</dt><dd>0 en cas de succès, -1 en cas d'erreur (fichier déjà existant, manque de mémoire, etc.). </dd></dl>
+
+</div>
+</div>
+<a id="a23bdaeeea3496325b0f7032069a9eef0" name="a23bdaeeea3496325b0f7032069a9eef0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23bdaeeea3496325b0f7032069a9eef0">&#9670;&#160;</a></span>create_hard_link()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void create_hard_link </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>source</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>link</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae823f1d6cd167c60dfd447da3ad96e68" name="ae823f1d6cd167c60dfd447da3ad96e68"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae823f1d6cd167c60dfd447da3ad96e68">&#9670;&#160;</a></span>create_symbolic_link()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void create_symbolic_link </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>source</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>link</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Crée un lien symbolique vers un fichier existant ou inexistant. </p>
+<p>Cette fonction permet de créer un lien symbolique qui pointe vers un fichier donné. Si la cible n'existe pas, un avertissement est affiché (lien symbolique "dangling").</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>Le fichier cible du lien symbolique. </td></tr>
+    <tr><td class="paramname">link</td><td>Le nom du lien symbolique à créer.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Un lien symbolique est un fichier spécial contenant uniquement le chemin de la cible. </dd>
+<dd>
+Si un fichier du même nom existe déjà dans le répertoire actuel, la création est annulée.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si la cible n'existe pas, le lien est créé mais restera "dangling".</dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Le lien symbolique est ajouté au répertoire courant et sauvegardé dans l'état du système de fichiers. </dd></dl>
+
+</div>
+</div>
+<a id="a582c8002517dac69236a328879c42d75" name="a582c8002517dac69236a328879c42d75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a582c8002517dac69236a328879c42d75">&#9670;&#160;</a></span>delete_directory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void delete_directory </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>dirname</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Supprime un répertoire du système de fichiers virtuel. </p>
+<p>Cette fonction recherche le répertoire spécifié par <code>dirname</code>, vérifie qu'il peut être supprimé, demande une confirmation à l'utilisateur s'il contient des fichiers ou des sous-répertoires, puis le supprime ainsi que son contenu récursivement.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dirname</td><td>Nom du répertoire à supprimer.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Ne permet pas la suppression du répertoire racine ni du répertoire courant. </dd>
+<dd>
+La suppression des fichiers et des sous-répertoires est effectuée de manière récursive. </dd>
+<dd>
+Utilise un mutex pour éviter les accès concurrents au système de fichiers.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si le répertoire contient des fichiers ou des sous-répertoires, l'utilisateur est invité à confirmer la suppression.</dd></dl>
+<dl class="section return"><dt>Renvoie</dt><dd>Ne retourne rien, mais affiche des messages d'erreur ou de confirmation dans la console. </dd></dl>
+
+</div>
+</div>
+<a id="a96d98c0ddb0d46a92d6b2d4a98b821f0" name="a96d98c0ddb0d46a92d6b2d4a98b821f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96d98c0ddb0d46a92d6b2d4a98b821f0">&#9670;&#160;</a></span>delete_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void delete_file </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Supprime un fichier du répertoire actuel. </p>
+<p>Cette fonction supprime un fichier en libérant d'abord les pages allouées au fichier et en décalant les fichiers restants.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Le nom du fichier à supprimer. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ad60fc23fdfbb59d8f4c4b440edf25cc7" name="ad60fc23fdfbb59d8f4c4b440edf25cc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad60fc23fdfbb59d8f4c4b440edf25cc7">&#9670;&#160;</a></span>file_seek()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int file_seek </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="struct_file.html">File</a> *</td>          <td class="paramname"><span class="paramname"><em>file</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>offset</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>whence</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Déplace le curseur dans un fichier. </p>
+<p>Cette fonction déplace la position du curseur de lecture/écriture dans un fichier en fonction du paramètre <code>whence</code>. Les positions possibles sont :</p><ul>
+<li><code>SEEK_SET</code> : à partir du début du fichier</li>
+<li><code>SEEK_CUR</code> : à partir de la position actuelle du curseur</li>
+<li><code>SEEK_END</code> : à partir de la fin du fichier</li>
+</ul>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">file</td><td>Le fichier à modifier. </td></tr>
+    <tr><td class="paramname">offset</td><td>L'offset à ajouter à la position actuelle. </td></tr>
+    <tr><td class="paramname">whence</td><td>L'origine du déplacement (<code>SEEK_SET</code>, <code>SEEK_CUR</code>, <code>SEEK_END</code>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Renvoie</dt><dd>La nouvelle position du curseur, ou -1 en cas d'erreur. </dd></dl>
+
+</div>
+</div>
+<a id="adebcaa9d8fc92f3c71aa9985b151820c" name="adebcaa9d8fc92f3c71aa9985b151820c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adebcaa9d8fc92f3c71aa9985b151820c">&#9670;&#160;</a></span>format_filesystem()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void format_filesystem </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Formate le système de fichiers en effaçant toutes les données. </p>
+<p>Cette fonction demande confirmation avant d'effacer toutes les données du système de fichiers. Si l'utilisateur confirme, le stockage est réinitialisé et toutes les structures internes sont réinitialisées.</p>
+<dl class="section warning"><dt>Avertissement</dt><dd>Cette opération est irréversible et supprime tous les fichiers et répertoires existants.</dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Si confirmé, le système de fichiers est formaté et réinitialisé à son état initial. </dd></dl>
+
+</div>
+</div>
+<a id="a44fdfefd73eed7f04ff9f0fed4660ae8" name="a44fdfefd73eed7f04ff9f0fed4660ae8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44fdfefd73eed7f04ff9f0fed4660ae8">&#9670;&#160;</a></span>get_current_working_directory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * get_current_working_directory </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Obtient le répertoire de travail actuel. </p>
+<p>Cette fonction renvoie le chemin absolu du répertoire de travail actuel dans le système de fichiers.</p>
+<dl class="section return"><dt>Renvoie</dt><dd>Le chemin absolu du répertoire actuel. </dd></dl>
+
+</div>
+</div>
+<a id="a3ceba55df8873c7ed2b57f36a5dbb012" name="a3ceba55df8873c7ed2b57f36a5dbb012"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ceba55df8873c7ed2b57f36a5dbb012">&#9670;&#160;</a></span>initialize_directories()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void initialize_directories </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialise les répertoires du système de fichiers avec des valeurs par défaut. </p>
+
+</div>
+</div>
+<a id="a52cf0b8548d19276e7337e1fc0717f28" name="a52cf0b8548d19276e7337e1fc0717f28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52cf0b8548d19276e7337e1fc0717f28">&#9670;&#160;</a></span>list_files()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void list_files </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Affiche la liste des fichiers et des sous-répertoires dans le répertoire courant. </p>
+<p>Cette fonction verrouille l'accès concurrent avec un mutex, compte le nombre total de répertoires existants, puis affiche les informations sur le répertoire courant, y compris les sous-répertoires et les fichiers qu'il contient.</p>
+<dl class="section note"><dt>Note</dt><dd>Utilise un mutex pour éviter les accès concurrents au système de fichiers. </dd>
+<dd>
+Affiche le nombre total de répertoires, le répertoire courant et son contenu.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>La fonction ne retourne pas de valeurs, mais affiche directement les résultats dans la console. </dd></dl>
+
+</div>
+</div>
+<a id="a14de24c538556c8f0fd5ff0429dac695" name="a14de24c538556c8f0fd5ff0429dac695"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14de24c538556c8f0fd5ff0429dac695">&#9670;&#160;</a></span>load_state()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void load_state </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Charge l'état du système de fichiers depuis un fichier binaire. </p>
+
+</div>
+</div>
+<a id="a59938e85b7f60cfb477647ed21b8a982" name="a59938e85b7f60cfb477647ed21b8a982"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59938e85b7f60cfb477647ed21b8a982">&#9670;&#160;</a></span>login()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int login </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Fonction permettant la connexion d'un utilisateur. </p>
+<dl class="section return"><dt>Renvoie</dt><dd>L'index de l'utilisateur si les identifiants sont corrects, -1 sinon. </dd></dl>
+
+</div>
+</div>
+<a id="a7627df82032832d994b25429782d0c10" name="a7627df82032832d994b25429782d0c10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7627df82032832d994b25429782d0c10">&#9670;&#160;</a></span>move_file_to_dir()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void move_file_to_dir </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>dirname</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Déplace un fichier vers un autre répertoire. </p>
+<p>Cette fonction permet de déplacer un fichier existant d'un répertoire à un autre dans le système de fichiers. Elle vérifie l'existence du fichier source, l'existence du répertoire cible, et si un fichier du même nom existe déjà dans le répertoire cible.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Nom du fichier à déplacer. </td></tr>
+    <tr><td class="paramname">dirname</td><td>Nom du répertoire de destination.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>La fonction utilise un mutex pour protéger l'accès concurrent à la structure du système de fichiers. </dd>
+<dd>
+Si le fichier ou le répertoire cible n'existe pas, ou si le répertoire est plein, un message d'erreur est affiché.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si un fichier du même nom existe déjà dans le répertoire cible, le déplacement est annulé.</dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Le fichier est supprimé du répertoire source après avoir été ajouté au répertoire cible. </dd></dl>
+
+</div>
+</div>
+<a id="aab72410812b51dc8f2e03e32f7bec57e" name="aab72410812b51dc8f2e03e32f7bec57e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab72410812b51dc8f2e03e32f7bec57e">&#9670;&#160;</a></span>print_file_info()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void print_file_info </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Affiche les informations détaillées d'un fichier. </p>
+<p>Cette fonction recherche un fichier dans le répertoire courant et affiche ses informations, notamment son nom, sa taille, son propriétaire, ses permissions et ses horodatages de création et de modification.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Nom du fichier dont les informations doivent être affichées.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Utilise un mutex pour éviter les accès concurrents à la structure du système de fichiers. </dd>
+<dd>
+Les permissions sont affichées au format octal ainsi qu'en notation symbolique (rwx). </dd>
+<dd>
+Les horodatages sont affichés au format local à l'aide de <code>ctime()</code>.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si le fichier n'existe pas, un message d'erreur est affiché. </dd></dl>
+
+</div>
+</div>
+<a id="a525e231be66f2e8b4687e167965746fe" name="a525e231be66f2e8b4687e167965746fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a525e231be66f2e8b4687e167965746fe">&#9670;&#160;</a></span>read_from_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * read_from_file </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>bytes_to_read</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>offset</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Lit des données depuis un fichier existant. </p>
+<p>Cette fonction permet de lire un nombre donné d'octets à partir d'un fichier existant dans le répertoire courant, en tenant compte d'un décalage (<code>offset</code>). Elle vérifie d'abord si le fichier existe, si les permissions de lecture sont accordées, et alloue la mémoire nécessaire pour stocker les données lues.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Nom du fichier à lire. </td></tr>
+    <tr><td class="paramname">bytes_to_read</td><td>Nombre d'octets à lire (si &lt;= 0, lit jusqu'à la fin du fichier). </td></tr>
+    <tr><td class="paramname">offset</td><td>Position à partir de laquelle commencer la lecture (doit être positif).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Renvoie</dt><dd>Un pointeur vers une chaîne contenant les données lues en cas de succès, NULL en cas d'erreur.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Utilise un mutex pour assurer la synchronisation et éviter les accès concurrents. </dd>
+<dd>
+Vérifie les permissions avant la lecture. </dd>
+<dd>
+Met à jour l'horodatage de modification du fichier après la lecture.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Retourne NULL si le fichier n'existe pas, si les permissions de lecture sont insuffisantes, ou si l'allocation mémoire échoue. </dd>
+<dd>
+L'utilisateur est responsable de libérer la mémoire allouée pour la chaîne retournée afin d'éviter les fuites de mémoire. </dd></dl>
+
+</div>
+</div>
+<a id="a6b14d434f139d0d189838afbb375b6ab" name="a6b14d434f139d0d189838afbb375b6ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b14d434f139d0d189838afbb375b6ab">&#9670;&#160;</a></span>restore_filesystem()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void restore_filesystem </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>backup_name</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Restaure le système de fichiers à partir d'un fichier de sauvegarde. </p>
+<p>Cette fonction restaure le système de fichiers en écrasant le fichier de stockage actuel avec un fichier de sauvegarde spécifié. Le fichier de sauvegarde doit être dans le même format que celui utilisé par la fonction de sauvegarde, avec l'extension <code>.bak</code>.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">backup_name</td><td>Le nom de base du fichier de sauvegarde (sans extension).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Cette opération écrasera le système de fichiers actuel. Un message d'avertissement est affiché et l'utilisateur doit confirmer avant de procéder. Si la restauration échoue, un message d'erreur est affiché. </dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Le système de fichiers actuel est écrasé et restauré avec le contenu du fichier de sauvegarde. </dd></dl>
+
+</div>
+</div>
+<a id="a7f35f5c962b2bbb71fc9d56daab8b4fe" name="a7f35f5c962b2bbb71fc9d56daab8b4fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f35f5c962b2bbb71fc9d56daab8b4fe">&#9670;&#160;</a></span>save_state()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void save_state </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sauvegarde l'état du système de fichiers dans un fichier binaire. </p>
+
+</div>
+</div>
+<a id="a7ccd18a8c8587779cb2accd2de201a4b" name="a7ccd18a8c8587779cb2accd2de201a4b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ccd18a8c8587779cb2accd2de201a4b">&#9670;&#160;</a></span>show_directory_info()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void show_directory_info </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>dirname</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Affiche les informations d'un répertoire. </p>
+<p>Cette fonction affiche des informations détaillées sur un répertoire spécifique dans le système de fichiers, comme son nom, son chemin, le nombre de fichiers qu'il contient, et la date de création. Si aucun nom de répertoire n'est spécifié, les informations sur le répertoire courant sont affichées.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dirname</td><td>Le nom du répertoire dont les informations doivent être affichées. Si <code>NULL</code> ou <code>"."</code> est passé, le répertoire courant est utilisé.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>Si le répertoire spécifié n'existe pas ou n'est pas accessible, un message d'erreur est affiché.</dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>Les informations sur le répertoire spécifié sont affichées dans la sortie standard. </dd></dl>
+
+</div>
+</div>
+<a id="a037429cc84bc4f7d19c3155156abd593" name="a037429cc84bc4f7d19c3155156abd593"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a037429cc84bc4f7d19c3155156abd593">&#9670;&#160;</a></span>write_to_file()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int write_to_file </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>filename</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>append</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Écrit des données dans un fichier existant. </p>
+<p>Cette fonction permet d'écrire ou d'ajouter du contenu à un fichier dans le répertoire courant. Elle vérifie d'abord si le fichier existe, si les permissions d'écriture sont accordées, et alloue la mémoire nécessaire pour stocker les nouvelles données. En mode ajout (<code>append</code>), les données sont concaténées à la fin du fichier. En mode écrasement, le fichier est réécrit complètement.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Nom du fichier dans lequel écrire. </td></tr>
+    <tr><td class="paramname">data</td><td>Données à écrire dans le fichier. </td></tr>
+    <tr><td class="paramname">append</td><td>Indicateur d'ajout (1 pour ajouter, 0 pour écraser).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Renvoie</dt><dd>Le nombre d'octets écrits en cas de succès, -1 en cas d'erreur.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Utilise un mutex pour assurer la synchronisation et éviter les accès concurrents. </dd>
+<dd>
+Vérifie les permissions avant l'écriture. </dd>
+<dd>
+Met à jour la table des pages si nécessaire.</dd></dl>
+<dl class="section warning"><dt>Avertissement</dt><dd>La fonction retourne -1 si le fichier n'existe pas, si les permissions d'écriture sont insuffisantes, ou si l'allocation mémoire échoue. </dd></dl>
+
+</div>
+</div>
+<h2 class="groupheader">Documentation des variables</h2>
+<a id="a5e8a009b88c3af2269958f190efae3f7" name="a5e8a009b88c3af2269958f190efae3f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e8a009b88c3af2269958f190efae3f7">&#9670;&#160;</a></span>fs_state</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="struct_file_system_state.html">FileSystemState</a> fs_state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Structure contenant l'état du système de fichiers. </p>
+
+</div>
+</div>
+<a id="a4acff8232e4aec9cd5c6dc200ac55ef3" name="a4acff8232e4aec9cd5c6dc200ac55ef3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4acff8232e4aec9cd5c6dc200ac55ef3">&#9670;&#160;</a></span>mutex</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Mutex pour gérer l'accès concurrentiel au système de fichiers. </p>
+
+</div>
+</div>
+<a id="aa524f23390f58634e5d9afa4540d6df5" name="aa524f23390f58634e5d9afa4540d6df5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa524f23390f58634e5d9afa4540d6df5">&#9670;&#160;</a></span>page_bitmap</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char page_bitmap[<a class="el" href="filesystem__manager_8c.html#ac1a7ceca1ee1655830e8f2df4c98ab08">TOTAL_PAGES</a>/8]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bitmap de gestion des pages mémoire. </p>
+
+</div>
+</div>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+Généré par&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2
+</small></address>
+</div><!-- doc-content -->
+</body>
+</html>

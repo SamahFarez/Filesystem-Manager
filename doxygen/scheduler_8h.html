@@ -1,0 +1,418 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.13.2"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Projet_OS: Référence du fichier C:/code/Projet_OS/include/scheduler.h</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+  $(function() { init_search(); });
+/* @license-end */
+</script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">Projet_OS<span id="projectnumber">&#160;1.0 Alpha</span>
+   </div>
+  </td>
+    <td>        <div id="MSearchBox" class="MSearchBoxInactive">
+        <span class="left">
+          <span id="MSearchSelect"                onmouseover="return searchBox.OnSearchSelectShow()"                onmouseout="return searchBox.OnSearchSelectHide()">&#160;</span>
+          <input type="text" id="MSearchField" value="" placeholder="Recherche" accesskey="S"
+               onfocus="searchBox.OnSearchFieldFocus(true)" 
+               onblur="searchBox.OnSearchFieldFocus(false)" 
+               onkeyup="searchBox.OnSearchFieldChange(event)"/>
+          </span><span class="right">
+            <a id="MSearchClose" href="javascript:searchBox.CloseResultsWindow()"><img id="MSearchCloseImg" border="0" src="search/close.svg" alt=""/></a>
+          </span>
+        </div>
+</td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Généré par Doxygen 1.13.2 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() { codefold.init(0); });
+/* @license-end */
+</script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function(){ initResizable(false); });
+/* @license-end */
+</script>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Chargement...</div>
+<div class="SRStatus" id="Searching">Recherche...</div>
+<div class="SRStatus" id="NoMatches">Aucune correspondance</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_050edd66366d13764f98250ef6db77f6.html">code</a></li><li class="navelem"><a class="el" href="dir_b57a8e1ad58ce66e5eaca629d15cea42.html">Projet_OS</a></li><li class="navelem"><a class="el" href="dir_a10d2e815b37f88027196b49e6eda70f.html">include</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div id="doc-content">
+<div class="header">
+  <div class="summary">
+<a href="#func-members">Fonctions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
+  <div class="headertitle"><div class="title">Référence du fichier scheduler.h</div></div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><code>#include &quot;<a class="el" href="filesystem_8h_source.html">filesystem.h</a>&quot;</code><br />
+</div>
+<p><a href="scheduler_8h_source.html">Aller au code source de ce fichier.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Fonctions</h2></td></tr>
+<tr class="memitem:a8c8c485cf551a61462a5a2c9077b2644" id="r_a8c8c485cf551a61462a5a2c9077b2644"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8c8c485cf551a61462a5a2c9077b2644">scheduler</a> (void *arg)</td></tr>
+<tr class="memdesc:a8c8c485cf551a61462a5a2c9077b2644"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fonction principale du scheduler exécutée dans un thread.  <br /></td></tr>
+<tr class="separator:a8c8c485cf551a61462a5a2c9077b2644"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff9a9f3dae5820c4e82523e1648c80b8" id="r_aff9a9f3dae5820c4e82523e1648c80b8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aff9a9f3dae5820c4e82523e1648c80b8">add_job</a> (const char *command)</td></tr>
+<tr class="memdesc:aff9a9f3dae5820c4e82523e1648c80b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ajoute une commande à la file des jobs.  <br /></td></tr>
+<tr class="separator:aff9a9f3dae5820c4e82523e1648c80b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae84a690422ebe93e0792f58eb29967cf" id="r_ae84a690422ebe93e0792f58eb29967cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae84a690422ebe93e0792f58eb29967cf">print_queue</a> (int current_job_index)</td></tr>
+<tr class="memdesc:ae84a690422ebe93e0792f58eb29967cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Affiche l'état actuel de la file d'attente des jobs.  <br /></td></tr>
+<tr class="separator:ae84a690422ebe93e0792f58eb29967cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b66d5e31b5dc18b314c8a68163263bd" id="r_a4b66d5e31b5dc18b314c8a68163263bd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4b66d5e31b5dc18b314c8a68163263bd">cleanup</a> ()</td></tr>
+<tr class="memdesc:a4b66d5e31b5dc18b314c8a68163263bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Libère toutes les ressources et arrête l'ordonnanceur.  <br /></td></tr>
+<tr class="separator:a4b66d5e31b5dc18b314c8a68163263bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48bc8269f9046d40e104a2595f4bc0cb" id="r_a48bc8269f9046d40e104a2595f4bc0cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a48bc8269f9046d40e104a2595f4bc0cb">handle_signal</a> (int sig)</td></tr>
+<tr class="memdesc:a48bc8269f9046d40e104a2595f4bc0cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gère le signal de terminaison (ex: Ctrl+C).  <br /></td></tr>
+<tr class="separator:a48bc8269f9046d40e104a2595f4bc0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a4debbbdc082f42f2934ba68830c214b7" id="r_a4debbbdc082f42f2934ba68830c214b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_job.html">Job</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4debbbdc082f42f2934ba68830c214b7">job_queue</a> [<a class="el" href="filesystem__manager_8c.html#ab392eccba9f043ae0be432eceaf65be4">MAX_JOBS</a>]</td></tr>
+<tr class="separator:a4debbbdc082f42f2934ba68830c214b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac261b45b6346e633de22d510c9f6a770" id="r_ac261b45b6346e633de22d510c9f6a770"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac261b45b6346e633de22d510c9f6a770">front</a></td></tr>
+<tr class="separator:ac261b45b6346e633de22d510c9f6a770"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af866be352de659d624986cb76b8d45b6" id="r_af866be352de659d624986cb76b8d45b6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af866be352de659d624986cb76b8d45b6">rear</a></td></tr>
+<tr class="separator:af866be352de659d624986cb76b8d45b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adced14fcf3ab49e9fce398ada0764adc" id="r_adced14fcf3ab49e9fce398ada0764adc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adced14fcf3ab49e9fce398ada0764adc">job_count</a></td></tr>
+<tr class="separator:adced14fcf3ab49e9fce398ada0764adc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33a4b8407de9ffec8a4e5e7044463c2d" id="r_a33a4b8407de9ffec8a4e5e7044463c2d"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a33a4b8407de9ffec8a4e5e7044463c2d">queue_lock</a></td></tr>
+<tr class="separator:a33a4b8407de9ffec8a4e5e7044463c2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5facfb68e60878159746462f908c8e8" id="r_aa5facfb68e60878159746462f908c8e8"><td class="memItemLeft" align="right" valign="top">pthread_cond_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa5facfb68e60878159746462f908c8e8">job_available</a></td></tr>
+<tr class="separator:aa5facfb68e60878159746462f908c8e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f45113638a0b749a8a205d2cd7fb42b" id="r_a2f45113638a0b749a8a205d2cd7fb42b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2f45113638a0b749a8a205d2cd7fb42b">running</a></td></tr>
+<tr class="separator:a2f45113638a0b749a8a205d2cd7fb42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<h2 class="groupheader">Documentation des fonctions</h2>
+<a id="aff9a9f3dae5820c4e82523e1648c80b8" name="aff9a9f3dae5820c4e82523e1648c80b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff9a9f3dae5820c4e82523e1648c80b8">&#9670;&#160;</a></span>add_job()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void add_job </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>command</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Ajoute une commande à la file des jobs. </p>
+<p>Si la file n'est pas pleine, la commande est copiée et ajoutée. Sinon, un message d'erreur est affiché.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">command</td><td>Chaîne de caractères représentant la commande à exécuter. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a4b66d5e31b5dc18b314c8a68163263bd" name="a4b66d5e31b5dc18b314c8a68163263bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4b66d5e31b5dc18b314c8a68163263bd">&#9670;&#160;</a></span>cleanup()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void cleanup </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Libère toutes les ressources et arrête l'ordonnanceur. </p>
+<p>Cette fonction met <code>running</code> à 0, signale les threads en attente, et libère la mémoire allouée pour les commandes de la file de jobs. </p>
+
+</div>
+</div>
+<a id="a48bc8269f9046d40e104a2595f4bc0cb" name="a48bc8269f9046d40e104a2595f4bc0cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48bc8269f9046d40e104a2595f4bc0cb">&#9670;&#160;</a></span>handle_signal()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void handle_signal </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>sig</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Gère le signal de terminaison (ex: Ctrl+C). </p>
+<p>Cette fonction nettoie la file d'attente et arrête le programme proprement.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sig</td><td>Signal reçu (ex: SIGINT). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ae84a690422ebe93e0792f58eb29967cf" name="ae84a690422ebe93e0792f58eb29967cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae84a690422ebe93e0792f58eb29967cf">&#9670;&#160;</a></span>print_queue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void print_queue </td>
+          <td>(</td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>current_job_index</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Affiche l'état actuel de la file d'attente des jobs. </p>
+<p>Cette fonction imprime la liste des jobs en attente, avec une indication du job en cours d'exécution.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">current_job_index</td><td>Index du job en cours d'exécution (0 si aucun). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a8c8c485cf551a61462a5a2c9077b2644" name="a8c8c485cf551a61462a5a2c9077b2644"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c8c485cf551a61462a5a2c9077b2644">&#9670;&#160;</a></span>scheduler()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void * scheduler </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>arg</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Fonction principale du scheduler exécutée dans un thread. </p>
+<p>Cette fonction attend qu'un job soit disponible, puis l'exécute en appelant <code><a class="el" href="filesystem__manager_8c.html#af70b571315ce5b8df4ac4f2275a2b74e">execute_job()</a></code>. Elle tourne en boucle tant que <code>running</code> est vrai.</p>
+<dl class="params"><dt>Paramètres</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">arg</td><td>Argument du thread (non utilisé). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Renvoie</dt><dd>Toujours NULL. </dd></dl>
+
+</div>
+</div>
+<h2 class="groupheader">Documentation des variables</h2>
+<a id="ac261b45b6346e633de22d510c9f6a770" name="ac261b45b6346e633de22d510c9f6a770"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac261b45b6346e633de22d510c9f6a770">&#9670;&#160;</a></span>front</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int front</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa5facfb68e60878159746462f908c8e8" name="aa5facfb68e60878159746462f908c8e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa5facfb68e60878159746462f908c8e8">&#9670;&#160;</a></span>job_available</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">pthread_cond_t job_available</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Condition pour signaler l'ajout d'un job </p>
+
+</div>
+</div>
+<a id="adced14fcf3ab49e9fce398ada0764adc" name="adced14fcf3ab49e9fce398ada0764adc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adced14fcf3ab49e9fce398ada0764adc">&#9670;&#160;</a></span>job_count</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int job_count</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4debbbdc082f42f2934ba68830c214b7" name="a4debbbdc082f42f2934ba68830c214b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4debbbdc082f42f2934ba68830c214b7">&#9670;&#160;</a></span>job_queue</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="struct_job.html">Job</a> job_queue[<a class="el" href="filesystem__manager_8c.html#ab392eccba9f043ae0be432eceaf65be4">MAX_JOBS</a>]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="struct_file.html">File</a> circulaire contenant les jobs </p>
+
+</div>
+</div>
+<a id="a33a4b8407de9ffec8a4e5e7044463c2d" name="a33a4b8407de9ffec8a4e5e7044463c2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33a4b8407de9ffec8a4e5e7044463c2d">&#9670;&#160;</a></span>queue_lock</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">pthread_mutex_t queue_lock</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Mutex pour protéger l'accès à la file </p>
+
+</div>
+</div>
+<a id="af866be352de659d624986cb76b8d45b6" name="af866be352de659d624986cb76b8d45b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af866be352de659d624986cb76b8d45b6">&#9670;&#160;</a></span>rear</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rear</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2f45113638a0b749a8a205d2cd7fb42b" name="a2f45113638a0b749a8a205d2cd7fb42b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f45113638a0b749a8a205d2cd7fb42b">&#9670;&#160;</a></span>running</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int running</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Indicateur d'exécution du scheduler </p>
+
+</div>
+</div>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+Généré par&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2
+</small></address>
+</div><!-- doc-content -->
+</body>
+</html>
