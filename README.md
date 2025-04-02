@@ -71,4 +71,3 @@ Une fois dans le shell interactif, vous pouvez utiliser la commande ```help()```
 ## Licence
 
 Ce projet est publié sous licence MIT.
-```
