@@ -72,12 +72,3 @@ Une fois dans le shell interactif, vous pouvez utiliser la commande ```help()```
 
 Ce projet est publié sous licence MIT.
 ```
-
-Pour télécharger ce fichier :
-1. Copiez tout le contenu ci-dessus
-2. Collez-le dans un nouveau fichier nommé `README.md`
-3. Enregistrez-le sur votre ordinateur
-
-Vous pouvez aussi utiliser cette commande pour le télécharger directement (si vous avez configuré un dépôt) :
-```bash
-wget https://votre-lien/README.fr.md -O README.md
