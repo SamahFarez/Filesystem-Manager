@@ -35,7 +35,7 @@ Une fois dans le shell interactif, vous pouvez utiliser la commande ```help()```
 ## Dépannage
 
 ### Problèmes de compilation
-- Assurez-vous d'avoir les dépendances requises :
+- Assurez-vous d'avoir les dépendances requises (Exemple installation sur Linux ):
   ```bash
   sudo apt install build-essential
   ```
